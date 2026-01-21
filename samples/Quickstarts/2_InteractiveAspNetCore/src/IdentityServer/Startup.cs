@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using IdentityServer4.Services;
 
 namespace IdentityServer
 {
@@ -37,6 +38,9 @@ namespace IdentityServer
                 .AddInMemoryClients(Config.Clients)
                 .AddTestUsers(TestUsers.Users)
                 .AddProfileService<ProfileService>();  // CRITICAL: Include claims in access token
+
+            // Override token creation to use "JWT" instead of "at+jwt" for legacy compatibility
+            builder.Services.AddTransient<ITokenCreationService, CustomJwtTokenCreationService>();
 
             // For development only - use developer signing credential
             builder.AddDeveloperSigningCredential();
