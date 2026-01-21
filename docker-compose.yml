@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  identityserver:
+    build:
+      context: .
+      dockerfile: Dockerfile.identityserver-local
+    container_name: oscar-idp
+    ports:
+      - "5555:5555"
+    environment:
+      - ASPNETCORE_URLS=http://+:5555
+      - ASPNETCORE_ENVIRONMENT=Development
+    networks:
+      - oscar-network
+
+networks:
+  oscar-network:
+    driver: bridge

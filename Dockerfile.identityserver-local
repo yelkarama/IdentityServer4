@@ -1,0 +1,31 @@
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+
+WORKDIR /src
+
+# Copy IdentityServer4 sample project
+COPY samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/*.csproj ./
+RUN dotnet restore
+
+# Copy all source files
+COPY samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/ ./
+
+# Build the project
+RUN dotnet publish -c Release -o /app/publish
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:6.0
+
+WORKDIR /app
+
+# Copy published output (includes wwwroot, Views, etc)
+COPY --from=build /app/publish .
+
+# Expose port
+EXPOSE 5555
+
+# Set environment
+ENV ASPNETCORE_URLS=http://+:5555
+ENV ASPNETCORE_ENVIRONMENT=Development
+
+# Run the application
+ENTRYPOINT ["dotnet", "IdentityServer.dll"]
