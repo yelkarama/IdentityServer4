@@ -56,6 +56,16 @@ namespace IdentityServer
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    
+                    // Configure Kestrel for high concurrency load testing
+                    webBuilder.ConfigureKestrel(options =>
+                    {
+                        options.Limits.MaxConcurrentConnections = 1000;
+                        options.Limits.MaxConcurrentUpgradedConnections = 1000;
+                        options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10MB
+                        options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
+                        options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
+                    });
                 });
     }
 }
