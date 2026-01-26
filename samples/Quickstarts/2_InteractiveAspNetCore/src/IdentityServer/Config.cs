@@ -54,13 +54,25 @@ namespace IdentityServer
                         "http://localhost:8080/oscar/oauth2/callback",
                         "http://localhost:8080/Ontario/oauth2/callback",
                         "https://localhost:8443/oscar/oauth2/callback",
-                        "https://localhost:8443/Ontario/oauth2/callback"
+                        "https://localhost:8443/Ontario/oauth2/callback",
+                        // nginx proxied URLs
+                        "http://localhost/oscar/oauth2/callback",
+                        "http://127.0.0.1/oscar/oauth2/callback",
+                        "http://localhost:8090/oscar/oauth2/callback",
+                        "http://localhost:8088/oscar/oauth2/callback",
+                        "http://localhost:8800/oscar/oauth2/callback"
                     },
                     
                     // Post-logout redirect URIs
                     PostLogoutRedirectUris = {
                         "http://localhost:8080/oscar/index.jsp",
-                        "http://localhost:8080/Ontario/index.jsp"
+                        "http://localhost:8080/Ontario/index.jsp",
+                        // nginx proxied URLs
+                        "http://localhost/oscar/index.jsp",
+                        "http://127.0.0.1/oscar/index.jsp",
+                        "http://localhost:8090/oscar/index.jsp",
+                        "http://localhost:8088/oscar/index.jsp",
+                        "http://localhost:8800/oscar/index.jsp"
                     },
                     
                     // OSCAR requires these scopes
