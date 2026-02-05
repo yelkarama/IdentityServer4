@@ -10,7 +10,7 @@ namespace IdentityServer
         public static List<TestUser> Users =>
             new List<TestUser>
             {
-                // CUSTOM USER: oscardoc (as requested)
+                // CUSTOM USER: oscardoc
                 new TestUser
                 {
                     SubjectId = "999",
@@ -34,6 +34,34 @@ namespace IdentityServer
                         
                         // Additional claims
                         new Claim("provider_no", "999998"),  // UPDATED
+                        new Claim("role", "doctor"),
+                    }
+                },
+                
+                // CUSTOM USER: elkaramayo
+                new TestUser
+                {
+                    SubjectId = "1000",
+                    Username = "elkaramayo",
+                    Password = "younes1234",
+                    Claims = new List<Claim>
+                    {
+                        // CRITICAL CLAIMS that OSCAR expects
+                        new Claim("accountNt", "elkaramayo"),  // REQUIRED: OidcFilter.java line 965
+                        
+                        // Standard OIDC claims
+                        new Claim(JwtClaimTypes.Name, "Younes El-karama"),
+                        new Claim(JwtClaimTypes.GivenName, "Younes"),
+                        new Claim(JwtClaimTypes.FamilyName, "El-karama"),
+                        new Claim(JwtClaimTypes.Email, "younes@example.com"),
+                        
+                        // OSCAR-specific claims
+                        new Claim("given_name", "Younes"),
+                        new Claim("family_name", "El-karama"),
+                        new Claim("email", "younes@example.com"),
+                        
+                        // Additional claims
+                        new Claim("provider_no", "10021"),
                         new Claim("role", "doctor"),
                     }
                 },
@@ -76,16 +104,16 @@ namespace IdentityServer
                     {
                         // CRITICAL: accountNt must be present
                         new Claim("accountNt", "testdoc2"),
-                        
+
                         new Claim(JwtClaimTypes.Name, "Dr. Jane Smith"),
                         new Claim(JwtClaimTypes.GivenName, "Jane"),
                         new Claim(JwtClaimTypes.FamilyName, "Smith"),
                         new Claim(JwtClaimTypes.Email, "jane.smith@example.com"),
-                        
+
                         new Claim("given_name", "Jane"),
                         new Claim("family_name", "Smith"),
                         new Claim("email", "jane.smith@example.com"),
-                        
+
                         new Claim("provider_no", "999997"),
                         new Claim("role", "doctor"),
                     }
@@ -100,16 +128,16 @@ namespace IdentityServer
                     Claims = new List<Claim>
                     {
                         new Claim("accountNt", "admin"),
-                        
+
                         new Claim(JwtClaimTypes.Name, "Admin User"),
                         new Claim(JwtClaimTypes.GivenName, "Admin"),
                         new Claim(JwtClaimTypes.FamilyName, "User"),
                         new Claim(JwtClaimTypes.Email, "admin@example.com"),
-                        
+
                         new Claim("given_name", "Admin"),
                         new Claim("family_name", "User"),
                         new Claim("email", "admin@example.com"),
-                        
+
                         new Claim("provider_no", "999999"),
                         new Claim("role", "admin"),
                     }
@@ -130,7 +158,7 @@ namespace IdentityServer
                         new Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn", "azureuser@example.com"),
                         new Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname", "Azure"),
                         new Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname", "User"),
-                        
+
                         new Claim(JwtClaimTypes.Name, "Azure User"),
                         new Claim("provider_no", "999996"),
                     }
