@@ -15,57 +15,57 @@ namespace IdentityServer
                 {
                     SubjectId = "999",
                     Username = "oscardoc",
-                    Password = "mac2002",
+                    Password = "aaaa",
                     Claims = new List<Claim>
                     {
                         // CRITICAL CLAIMS that OSCAR expects
                         new Claim("accountNt", "oscardoc"),  // REQUIRED: OidcFilter.java line 965
-                        
+
                         // Standard OIDC claims
                         new Claim(JwtClaimTypes.Name, "Oscar Doctor"),
                         new Claim(JwtClaimTypes.GivenName, "Oscar"),
                         new Claim(JwtClaimTypes.FamilyName, "Doctor"),
                         new Claim(JwtClaimTypes.Email, "oscardoc@example.com"),
-                        
+
                         // OSCAR-specific claims
                         new Claim("given_name", "Oscar"),
                         new Claim("family_name", "Doctor"),
                         new Claim("email", "oscardoc@example.com"),
-                        
+
                         // Additional claims
                         new Claim("provider_no", "999998"),  // UPDATED
                         new Claim("role", "doctor"),
                     }
                 },
-                
+
                 // CUSTOM USER: elkaramayo
                 new TestUser
                 {
                     SubjectId = "1000",
                     Username = "elkaramayo",
-                    Password = "younes1234",
+                    Password = "aaaa",
                     Claims = new List<Claim>
                     {
                         // CRITICAL CLAIMS that OSCAR expects
                         new Claim("accountNt", "elkaramayo"),  // REQUIRED: OidcFilter.java line 965
-                        
+
                         // Standard OIDC claims
                         new Claim(JwtClaimTypes.Name, "Younes El-karama"),
                         new Claim(JwtClaimTypes.GivenName, "Younes"),
                         new Claim(JwtClaimTypes.FamilyName, "El-karama"),
                         new Claim(JwtClaimTypes.Email, "younes@example.com"),
-                        
+
                         // OSCAR-specific claims
                         new Claim("given_name", "Younes"),
                         new Claim("family_name", "El-karama"),
                         new Claim("email", "younes@example.com"),
-                        
+
                         // Additional claims
                         new Claim("provider_no", "10021"),
                         new Claim("role", "doctor"),
                     }
                 },
-                
+
                 // Test Doctor 1 - Mimics CSC Active Directory user
                 new TestUser
                 {
@@ -76,24 +76,24 @@ namespace IdentityServer
                     {
                         // CRITICAL CLAIMS that OSCAR expects
                         new Claim("accountNt", "testdoc1"),  // REQUIRED: OidcFilter.java line 965
-                        
+
                         // Standard OIDC claims
                         new Claim(JwtClaimTypes.Name, "Dr. Test Doctor"),
                         new Claim(JwtClaimTypes.GivenName, "Test"),
                         new Claim(JwtClaimTypes.FamilyName, "Doctor"),
                         new Claim(JwtClaimTypes.Email, "testdoc1@example.com"),
-                        
+
                         // OSCAR-specific claims (optional but useful)
                         new Claim("given_name", "Test"),      // OidcFilter.java line 969
                         new Claim("family_name", "Doctor"),   // OidcFilter.java line 970
                         new Claim("email", "testdoc1@example.com"),  // OidcFilter.java line 968
-                        
+
                         // Additional claims for testing
                         new Claim("provider_no", "999998"),
                         new Claim("role", "doctor"),
                     }
                 },
-                
+
                 // Test Doctor 2 - Another test user
                 new TestUser
                 {
@@ -118,7 +118,7 @@ namespace IdentityServer
                         new Claim("role", "doctor"),
                     }
                 },
-                
+
                 // Test Admin - For testing admin features
                 new TestUser
                 {
@@ -142,7 +142,7 @@ namespace IdentityServer
                         new Claim("role", "admin"),
                     }
                 },
-                
+
                 // Azure AD style user (for testing Azure IDP claims fallback)
                 // OidcFilter.java lines 972-981 handle Azure-specific claim names
                 new TestUser
@@ -153,7 +153,7 @@ namespace IdentityServer
                     Claims = new List<Claim>
                     {
                         new Claim("accountNt", "azureuser"),
-                        
+
                         // Azure-style claims (with full URIs)
                         new Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn", "azureuser@example.com"),
                         new Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname", "Azure"),

@@ -12,6 +12,11 @@ namespace IdentityServerHost.Quickstart.UI
         public static bool AllowRememberLogin = true;
         public static TimeSpan RememberMeLoginDuration = TimeSpan.FromDays(30);
 
+        // Unattended auto-login (local dev only). Users here can be signed in
+        // without a password via login_hint (server-side) or /Account/AutoLogin.
+        public static bool EnableAutoLogin = true;
+        public static string[] AutoLoginUsers = { "oscardoc", "elkaramayo" };
+
         public static bool ShowLogoutPrompt = true;
         public static bool AutomaticRedirectAfterSignOut = false;
 

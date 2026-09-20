@@ -67,6 +67,15 @@ namespace IdentityServerHost.Quickstart.UI
                 return RedirectToAction("Challenge", "External", new { scheme = vm.ExternalLoginScheme, returnUrl });
             }
 
+            // Unattended auto-login for configured local users (local dev only).
+            var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
+            if (context != null
+                && AccountOptions.EnableAutoLogin
+                && AccountOptions.AutoLoginUsers.Contains(context.LoginHint))
+            {
+                return await AutoSignInAsync(context, context.LoginHint, returnUrl);
+            }
+
             return View(vm);
         }
 
@@ -173,7 +182,61 @@ namespace IdentityServerHost.Quickstart.UI
             return View(vm);
         }
 
-        
+        // Unattended auto-login (local dev only). Signs in a configured user
+        // without a password, then either flows into a pending authorize request
+        // (returnUrl) or just establishes the session and goes home.
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> AutoLogin(string username, string returnUrl = null)
+        {
+            if (!AccountOptions.EnableAutoLogin || !AccountOptions.AutoLoginUsers.Contains(username))
+                return View("AccessDenied");
+
+            var user = _users.FindByUsername(username);
+            if (user == null)
+                return View("AccessDenied");
+
+            await _events.RaiseAsync(new UserLoginSuccessEvent(user.Username, user.SubjectId, user.Username));
+
+            var isuser = new IdentityServerUser(user.SubjectId)
+            {
+                DisplayName = user.Username
+            };
+            await HttpContext.SignInAsync(isuser);
+
+            // If returnUrl is a real authorize request, flow straight into it;
+            // otherwise just establish the session and go home.
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
+                if (context != null)
+                    return Redirect(returnUrl);
+            }
+
+            return Redirect("~/");
+        }
+
+        private async Task<IActionResult> AutoSignInAsync(AuthorizationRequest context, string username, string returnUrl)
+        {
+            var user = _users.FindByUsername(username);
+            if (user == null)
+                return View("AccessDenied");
+
+            await _events.RaiseAsync(new UserLoginSuccessEvent(user.Username, user.SubjectId, user.Username, clientId: context.Client?.ClientId));
+
+            var isuser = new IdentityServerUser(user.SubjectId)
+            {
+                DisplayName = user.Username
+            };
+            await HttpContext.SignInAsync(isuser);
+
+            // Trust returnUrl: GetAuthorizationContextAsync returned non-null above.
+            if (context.IsNativeClient())
+                return this.LoadingPage("Redirect", returnUrl);
+
+            return Redirect(returnUrl);
+        }
+
         /// <summary>
         /// Show logout page
         /// </summary>
