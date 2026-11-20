@@ -58,6 +58,7 @@ namespace IdentityServer
                         "https://localhost:8443/Ontario/oauth2/callback",
                         // nginx proxied URLs
                         "http://localhost/oscar/oauth2/callback",
+                        "http://localhost/Ontario/oauth2/callback",
                         "http://127.0.0.1/oscar/oauth2/callback",
                         "http://localhost:8090/oscar/oauth2/callback",
                         "http://localhost:8088/oscar/oauth2/callback",
@@ -71,6 +72,7 @@ namespace IdentityServer
                         "http://localhost:8080/Ontario/index.jsp",
                         // nginx proxied URLs
                         "http://localhost/oscar/index.jsp",
+                        "http://localhost/Ontario/index.jsp",
                         "http://127.0.0.1/oscar/index.jsp",
                         "http://localhost:8090/oscar/index.jsp",
                         "http://localhost:8088/oscar/index.jsp",
