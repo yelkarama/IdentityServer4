@@ -53,9 +53,9 @@ namespace IdentityServer
                     RedirectUris = {
                         "http://localhost:8070/oscar/oauth2/callback",
                         "http://localhost:8080/oscar/oauth2/callback",
+                        "http://localhost:18080/oscar/oauth2/callback",
+                        "http://localhost:18080/Ontario/oauth2/callback",
                         "http://localhost:8080/Ontario/oauth2/callback",
-                        "https://localhost:8443/oscar/oauth2/callback",
-                        "https://localhost:8443/Ontario/oauth2/callback",
                         // nginx proxied URLs
                         "http://localhost/oscar/oauth2/callback",
                         "http://localhost/Ontario/oauth2/callback",
