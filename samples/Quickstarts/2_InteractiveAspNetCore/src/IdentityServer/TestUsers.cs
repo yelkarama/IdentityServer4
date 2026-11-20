@@ -7,6 +7,9 @@ namespace IdentityServer
 {
     public class TestUsers
     {
+        // LOCAL-TEST ONLY: plaintext passwords below are weak by design for OSCAR login
+        // testing. Do NOT deploy this sample to a non-loopback host; move these to config
+        // and enforce strong passwords before any real use.
         public static List<TestUser> Users =>
             new List<TestUser>
             {

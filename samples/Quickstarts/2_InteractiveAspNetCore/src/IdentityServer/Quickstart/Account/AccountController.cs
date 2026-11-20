@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Net;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -189,6 +190,14 @@ namespace IdentityServerHost.Quickstart.UI
         [AllowAnonymous]
         public async Task<IActionResult> AutoLogin(string username, string returnUrl = null)
         {
+            // Local dev only: passwordless auto-login must never be reachable off-loopback,
+            // otherwise anyone could impersonate a configured user with no password.
+            var conn = HttpContext.Connection;
+            if (conn.LocalIpAddress == null || conn.RemoteIpAddress == null
+                || !IPAddress.IsLoopback(conn.LocalIpAddress)
+                || !IPAddress.IsLoopback(conn.RemoteIpAddress))
+                return View("AccessDenied");
+
             if (!AccountOptions.EnableAutoLogin || !AccountOptions.AutoLoginUsers.Contains(username))
                 return View("AccessDenied");
 
@@ -218,6 +227,14 @@ namespace IdentityServerHost.Quickstart.UI
 
         private async Task<IActionResult> AutoSignInAsync(AuthorizationRequest context, string username, string returnUrl)
         {
+            // Local dev only: passwordless auto-login must never be reachable off-loopback,
+            // otherwise anyone could impersonate a configured user with no password.
+            var conn = HttpContext.Connection;
+            if (conn.LocalIpAddress == null || conn.RemoteIpAddress == null
+                || !IPAddress.IsLoopback(conn.LocalIpAddress)
+                || !IPAddress.IsLoopback(conn.RemoteIpAddress))
+                return View("AccessDenied");
+
             var user = _users.FindByUsername(username);
             if (user == null)
                 return View("AccessDenied");

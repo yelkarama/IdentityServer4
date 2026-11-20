@@ -21,7 +21,8 @@ namespace Api
                     
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        ValidateAudience = false
+                        ValidateAudience = true,
+                        ValidAudience = "api1"
                     };
                 });
             

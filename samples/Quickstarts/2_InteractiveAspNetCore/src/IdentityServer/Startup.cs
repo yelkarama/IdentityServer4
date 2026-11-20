@@ -75,13 +75,6 @@ namespace IdentityServer
             Console.WriteLine("  - Refresh Token: OneTimeOnly (rotating)");
             Console.WriteLine("  - Callback: /oauth2/callback");
             Console.WriteLine("");
-            Console.WriteLine("Test Users:");
-            Console.WriteLine("  - oscardoc / mac2002 (accountNt: oscardoc) ⭐ PRIMARY USER");
-            Console.WriteLine("  - testdoc1 / password (accountNt: testdoc1)");
-            Console.WriteLine("  - testdoc2 / password (accountNt: testdoc2)");
-            Console.WriteLine("  - admin / password (accountNt: admin)");
-            Console.WriteLine("  - azureuser / password (accountNt: azureuser)");
-            Console.WriteLine("");
             Console.WriteLine("Endpoints:");
             Console.WriteLine("  - Discovery: /.well-known/openid-configuration");
             Console.WriteLine("  - Authorize: /connect/authorize");
