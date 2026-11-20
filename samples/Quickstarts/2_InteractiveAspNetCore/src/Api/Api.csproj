@@ -1,10 +1,17 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
+    <!--
+      JwtBearer is a standalone NuGet package on net10 (not in the
+      Microsoft.AspNetCore.App shared framework here), so it must be referenced
+      explicitly. The version is supplied by src/Api/Directory.Build.targets,
+      which overrides the shared samples/Quickstarts pin (3.1.5) for this net10
+      project only.
+    -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
   </ItemGroup>
 

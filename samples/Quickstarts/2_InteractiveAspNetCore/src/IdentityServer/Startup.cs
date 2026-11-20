@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
-using IdentityServer4.Services;
+using Duende.IdentityServer.Services;
 
 namespace IdentityServer
 {
@@ -11,19 +11,18 @@ namespace IdentityServer
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            // Configure cookies for local development
+            // Application session cookie. The IdP is served over HTTPS only
+            // (https://localhost:5001), so the cookie must never traverse HTTP.
             services.ConfigureApplicationCookie(options =>
             {
                 options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
-                options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.None;
+                options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
             });
-            
+
             services.AddControllersWithViews();
 
             var builder = services.AddIdentityServer(options =>
             {
-                options.EmitStaticAudienceClaim = true;
-                
                 // CRITICAL: Cookie settings for local development
                 options.Authentication.CookieSameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
                 
@@ -66,7 +65,7 @@ namespace IdentityServer
             
             // Log startup info
             Console.WriteLine("=========================================");
-            Console.WriteLine("IdentityServer4 for OSCAR EMR Testing");
+            Console.WriteLine("Duende.IdentityServer for OSCAR EMR Testing");
             Console.WriteLine("=========================================");
             Console.WriteLine("");
             Console.WriteLine("Configuration:");

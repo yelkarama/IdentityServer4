@@ -1,0 +1,17 @@
+<Project>
+
+  <!--
+    The shared samples/Quickstarts/Directory.Build.targets pins
+    Microsoft.AspNetCore.Authentication.JwtBearer to 3.1.5 (the pin the
+    netcoreapp3.1 samples still need). This sample targets net10.0, where
+    JwtBearer must resolve to the net10 shared framework.
+
+    Directory.Build.targets is imported nearest-first, so this file runs after
+    the shared targets and its Update wins. It is scoped to src/Api/, so it
+    does not affect the IdP project or any other sample.
+  -->
+  <ItemGroup>
+    <PackageReference Update="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.15" />
+  </ItemGroup>
+
+</Project>

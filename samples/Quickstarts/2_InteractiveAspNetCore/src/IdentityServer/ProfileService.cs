@@ -1,8 +1,9 @@
-using IdentityServer4.Extensions;
-using IdentityServer4.Models;
-using IdentityServer4.Services;
-using IdentityServer4.Test;
+using Duende.IdentityServer.Extensions;
+using Duende.IdentityServer.Models;
+using Duende.IdentityServer.Services;
+using Duende.IdentityServer.Test;
 using System;
+using System.Threading;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -18,7 +19,7 @@ namespace IdentityServer
             _users = users;
         }
 
-        public Task GetProfileDataAsync(ProfileDataRequestContext context)
+        public Task GetProfileDataAsync(ProfileDataRequestContext context, CancellationToken cancellationToken)
         {
             // Get user from test user store
             var user = _users.FindBySubjectId(context.Subject.GetSubjectId());
@@ -36,7 +37,7 @@ namespace IdentityServer
             return Task.CompletedTask;
         }
 
-        public Task IsActiveAsync(IsActiveContext context)
+        public Task IsActiveAsync(IsActiveContext context, CancellationToken cancellationToken)
         {
             var user = _users.FindBySubjectId(context.Subject.GetSubjectId());
             context.IsActive = (user != null);

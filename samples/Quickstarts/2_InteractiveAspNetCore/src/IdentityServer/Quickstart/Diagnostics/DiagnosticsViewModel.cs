@@ -2,9 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
-using IdentityModel;
+using Duende.IdentityModel;
 using Microsoft.AspNetCore.Authentication;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -19,7 +20,20 @@ namespace IdentityServerHost.Quickstart.UI
             if (result.Properties.Items.ContainsKey("client_list"))
             {
                 var encoded = result.Properties.Items["client_list"];
-                var bytes = Base64Url.Decode(encoded);
+                // base64url decode (stdlib): swap URL-safe chars, restore padding.
+                // Guard against corrupt session data so the diagnostics page can't 500.
+                byte[] bytes;
+                try
+                {
+                    var s = encoded.Replace('-', '+').Replace('_', '/');
+                    if (s.Length % 4 == 2) s += "==";
+                    else if (s.Length % 4 == 3) s += "=";
+                    bytes = Convert.FromBase64String(s);
+                }
+                catch (FormatException)
+                {
+                    bytes = Array.Empty<byte>();
+                }
                 var value = Encoding.UTF8.GetString(bytes);
 
                 Clients = JsonConvert.DeserializeObject<string[]>(value);

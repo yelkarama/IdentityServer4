@@ -2,16 +2,17 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
-using IdentityServer4.Events;
-using IdentityServer4.Models;
-using IdentityServer4.Services;
-using IdentityServer4.Extensions;
+using Duende.IdentityServer.Events;
+using Duende.IdentityServer.Models;
+using Duende.IdentityServer.Services;
+using Duende.IdentityServer.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 using System.Threading.Tasks;
-using IdentityServer4.Validation;
+using System.Threading;
+using Duende.IdentityServer.Validation;
 using System.Collections.Generic;
 using System;
 
@@ -66,7 +67,7 @@ namespace IdentityServerHost.Quickstart.UI
 
             if (result.IsRedirect)
             {
-                var context = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl);
+                var context = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl, CancellationToken.None);
                 if (context?.IsNativeClient() == true)
                 {
                     // The client is native, so this change in how to
@@ -98,7 +99,7 @@ namespace IdentityServerHost.Quickstart.UI
             var result = new ProcessConsentResult();
 
             // validate return url is still valid
-            var request = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl);
+            var request = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl, CancellationToken.None);
             if (request == null) return result;
 
             ConsentResponse grantedConsent = null;
@@ -106,10 +107,10 @@ namespace IdentityServerHost.Quickstart.UI
             // user clicked 'no' - send back the standard 'access_denied' response
             if (model?.Button == "no")
             {
-                grantedConsent = new ConsentResponse { Error = AuthorizationError.AccessDenied };
+                grantedConsent = new ConsentResponse { Error = InteractionError.AccessDenied };
 
                 // emit event
-                await _events.RaiseAsync(new ConsentDeniedEvent(User.GetSubjectId(), request.Client.ClientId, request.ValidatedResources.RawScopeValues));
+                await _events.RaiseAsync(new ConsentDeniedEvent(User.GetSubjectId(), request.Client.ClientId, request.ValidatedResources.RawScopeValues), CancellationToken.None);
             }
             // user clicked 'yes' - validate the data
             else if (model?.Button == "yes")
@@ -120,7 +121,7 @@ namespace IdentityServerHost.Quickstart.UI
                     var scopes = model.ScopesConsented;
                     if (ConsentOptions.EnableOfflineAccess == false)
                     {
-                        scopes = scopes.Where(x => x != IdentityServer4.IdentityServerConstants.StandardScopes.OfflineAccess);
+                        scopes = scopes.Where(x => x != Duende.IdentityServer.IdentityServerConstants.StandardScopes.OfflineAccess);
                     }
 
                     grantedConsent = new ConsentResponse
@@ -131,7 +132,7 @@ namespace IdentityServerHost.Quickstart.UI
                     };
 
                     // emit event
-                    await _events.RaiseAsync(new ConsentGrantedEvent(User.GetSubjectId(), request.Client.ClientId, request.ValidatedResources.RawScopeValues, grantedConsent.ScopesValuesConsented, grantedConsent.RememberConsent));
+                    await _events.RaiseAsync(new ConsentGrantedEvent(User.GetSubjectId(), request.Client.ClientId, request.ValidatedResources.RawScopeValues, grantedConsent.ScopesValuesConsented, grantedConsent.RememberConsent), CancellationToken.None);
                 }
                 else
                 {
@@ -146,7 +147,7 @@ namespace IdentityServerHost.Quickstart.UI
             if (grantedConsent != null)
             {
                 // communicate outcome of consent back to identityserver
-                await _interaction.GrantConsentAsync(request, grantedConsent);
+                await _interaction.GrantConsentAsync(request, grantedConsent, CancellationToken.None);
 
                 // indicate that's it ok to redirect back to authorization endpoint
                 result.RedirectUri = model.ReturnUrl;
@@ -163,7 +164,7 @@ namespace IdentityServerHost.Quickstart.UI
 
         private async Task<ConsentViewModel> BuildViewModelAsync(string returnUrl, ConsentInputModel model = null)
         {
-            var request = await _interaction.GetAuthorizationContextAsync(returnUrl);
+            var request = await _interaction.GetAuthorizationContextAsync(returnUrl, CancellationToken.None);
             if (request != null)
             {
                 return CreateConsentViewModel(model, returnUrl, request);
@@ -208,7 +209,7 @@ namespace IdentityServerHost.Quickstart.UI
             }
             if (ConsentOptions.EnableOfflineAccess && request.ValidatedResources.Resources.OfflineAccess)
             {
-                apiScopes.Add(GetOfflineAccessScope(vm.ScopesConsented.Contains(IdentityServer4.IdentityServerConstants.StandardScopes.OfflineAccess) || model == null));
+                apiScopes.Add(GetOfflineAccessScope(vm.ScopesConsented.Contains(Duende.IdentityServer.IdentityServerConstants.StandardScopes.OfflineAccess) || model == null));
             }
             vm.ApiScopes = apiScopes;
 
@@ -251,7 +252,7 @@ namespace IdentityServerHost.Quickstart.UI
         {
             return new ScopeViewModel
             {
-                Value = IdentityServer4.IdentityServerConstants.StandardScopes.OfflineAccess,
+                Value = Duende.IdentityServer.IdentityServerConstants.StandardScopes.OfflineAccess,
                 DisplayName = ConsentOptions.OfflineAccessDisplayName,
                 Description = ConsentOptions.OfflineAccessDescription,
                 Emphasize = true,

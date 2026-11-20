@@ -1,9 +1,10 @@
-using IdentityServer4.Services;
-using IdentityServer4.Models;
+using Duende.IdentityServer.Services;
+using Duende.IdentityServer.Models;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.IdentityModel.Tokens.Jwt;
-using IdentityServer4.Configuration;
+using Duende.IdentityServer.Configuration;
 using Microsoft.AspNetCore.Authentication;
 
 namespace IdentityServer
@@ -15,7 +16,7 @@ namespace IdentityServer
     public class CustomJwtTokenCreationService : DefaultTokenCreationService
     {
         public CustomJwtTokenCreationService(
-            ISystemClock clock,
+            TimeProvider clock,
             IKeyMaterialService keys,
             IdentityServerOptions options,
             ILogger<DefaultTokenCreationService> logger)
@@ -23,18 +24,18 @@ namespace IdentityServer
         {
         }
 
-        protected override Task<JwtHeader> CreateHeaderAsync(Token token)
+        protected override async Task<Dictionary<string, object>> CreateHeaderElementsAsync(Token token)
         {
-            // Get the default header
-            var header = base.CreateHeaderAsync(token).Result;
+            // Get the default header elements (await, don't block a thread on .Result)
+            var elements = await base.CreateHeaderElementsAsync(token);
 
             // Override the "typ" header to use "JWT" instead of "at+jwt"
             if (token.Type == "access_token")
             {
-                header["typ"] = "JWT";  // Force legacy JWT type
+                elements["typ"] = "JWT";  // Force legacy JWT type
             }
 
-            return Task.FromResult(header);
+            return elements;
         }
     }
 }

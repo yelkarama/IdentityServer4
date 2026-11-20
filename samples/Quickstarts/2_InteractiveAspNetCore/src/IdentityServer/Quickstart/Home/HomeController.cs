@@ -2,13 +2,14 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
-using IdentityServer4.Services;
+using Duende.IdentityServer.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace IdentityServerHost.Quickstart.UI
 {
@@ -47,7 +48,7 @@ namespace IdentityServerHost.Quickstart.UI
             var vm = new ErrorViewModel();
 
             // retrieve error details from identityserver
-            var message = await _interaction.GetErrorContextAsync(errorId);
+            var message = await _interaction.GetErrorContextAsync(errorId, CancellationToken.None);
             if (message != null)
             {
                 vm.Error = message;

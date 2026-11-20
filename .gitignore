@@ -208,6 +208,8 @@ identityserver4_log.txt
 tempkey.rsa
 samples/KeyManagement/FileSystem/dataprotectionkeys/
 samples/KeyManagement/FileSystem/signingkeys/
+# Duende developer signing credential (regenerated at runtime; never commit)
+samples/Quickstarts/2_InteractiveAspNetCore/**/keys/
 workspace.xml
 
 src/IdentityServer4/host/identityserver.db

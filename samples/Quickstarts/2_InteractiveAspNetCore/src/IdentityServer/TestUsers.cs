@@ -1,5 +1,5 @@
-using IdentityModel;
-using IdentityServer4.Test;
+using Duende.IdentityModel;
+using Duende.IdentityServer.Test;
 using System.Collections.Generic;
 using System.Security.Claims;
 

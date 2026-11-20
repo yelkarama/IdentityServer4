@@ -2,14 +2,14 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
-using IdentityModel;
-using IdentityServer4;
-using IdentityServer4.Events;
-using IdentityServer4.Extensions;
-using IdentityServer4.Models;
-using IdentityServer4.Services;
-using IdentityServer4.Stores;
-using IdentityServer4.Test;
+using Duende.IdentityModel;
+using Duende.IdentityServer;
+using Duende.IdentityServer.Events;
+using Duende.IdentityServer.Extensions;
+using Duende.IdentityServer.Models;
+using Duende.IdentityServer.Services;
+using Duende.IdentityServer.Stores;
+using Duende.IdentityServer.Test;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -17,7 +17,9 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace IdentityServerHost.Quickstart.UI
 {
@@ -35,12 +37,14 @@ namespace IdentityServerHost.Quickstart.UI
         private readonly IClientStore _clientStore;
         private readonly IAuthenticationSchemeProvider _schemeProvider;
         private readonly IEventService _events;
+        private readonly ILogger<AccountController> _logger;
 
         public AccountController(
             IIdentityServerInteractionService interaction,
             IClientStore clientStore,
             IAuthenticationSchemeProvider schemeProvider,
             IEventService events,
+            ILogger<AccountController> logger = null,
             TestUserStore users = null)
         {
             // if the TestUserStore is not in DI, then we'll just use the global users collection
@@ -51,6 +55,7 @@ namespace IdentityServerHost.Quickstart.UI
             _clientStore = clientStore;
             _schemeProvider = schemeProvider;
             _events = events;
+            _logger = logger;
         }
 
         /// <summary>
@@ -69,7 +74,7 @@ namespace IdentityServerHost.Quickstart.UI
             }
 
             // Unattended auto-login for configured local users (local dev only).
-            var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
+            var context = await _interaction.GetAuthorizationContextAsync(returnUrl, CancellationToken.None);
             if (context != null
                 && AccountOptions.EnableAutoLogin
                 && AccountOptions.AutoLoginUsers.Contains(context.LoginHint))
@@ -88,7 +93,7 @@ namespace IdentityServerHost.Quickstart.UI
         public async Task<IActionResult> Login(LoginInputModel model, string button)
         {
             // check if we are in the context of an authorization request
-            var context = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl);
+            var context = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl, CancellationToken.None);
 
             // the user clicked the "cancel" button
             if (button != "login")
@@ -98,7 +103,7 @@ namespace IdentityServerHost.Quickstart.UI
                     // if the user cancels, send a result back into IdentityServer as if they 
                     // denied the consent (even if this client does not require consent).
                     // this will send back an access denied OIDC error response to the client.
-                    await _interaction.DenyAuthorizationAsync(context, AuthorizationError.AccessDenied);
+                    await _interaction.DenyAuthorizationAsync(context, InteractionError.AccessDenied, CancellationToken.None);
 
                     // we can trust model.ReturnUrl since GetAuthorizationContextAsync returned non-null
                     if (context.IsNativeClient())
@@ -123,7 +128,7 @@ namespace IdentityServerHost.Quickstart.UI
                 if (_users.ValidateCredentials(model.Username, model.Password))
                 {
                     var user = _users.FindByUsername(model.Username);
-                    await _events.RaiseAsync(new UserLoginSuccessEvent(user.Username, user.SubjectId, user.Username, clientId: context?.Client.ClientId));
+                    await _events.RaiseAsync(new UserLoginSuccessEvent(user.Username, user.SubjectId, user.Username, clientId: context?.Client.ClientId), CancellationToken.None);
 
                     // only set explicit expiration here if user chooses "remember me". 
                     // otherwise we rely upon expiration configured in cookie middleware.
@@ -169,12 +174,13 @@ namespace IdentityServerHost.Quickstart.UI
                     }
                     else
                     {
-                        // user might have clicked on a malicious link - should be logged
-                        throw new Exception("invalid return URL");
+                        // potential open-redirect attempt: log and fall back to home
+                        _logger.LogWarning("Open-redirect attempt after login: {ReturnUrl}", model.ReturnUrl);
+                        return Redirect("~/");
                     }
                 }
 
-                await _events.RaiseAsync(new UserLoginFailureEvent(model.Username, "invalid credentials", clientId:context?.Client.ClientId));
+                await _events.RaiseAsync(new UserLoginFailureEvent(model.Username, "invalid credentials", clientId:context?.Client.ClientId), CancellationToken.None);
                 ModelState.AddModelError(string.Empty, AccountOptions.InvalidCredentialsErrorMessage);
             }
 
@@ -192,10 +198,7 @@ namespace IdentityServerHost.Quickstart.UI
         {
             // Local dev only: passwordless auto-login must never be reachable off-loopback,
             // otherwise anyone could impersonate a configured user with no password.
-            var conn = HttpContext.Connection;
-            if (conn.LocalIpAddress == null || conn.RemoteIpAddress == null
-                || !IPAddress.IsLoopback(conn.LocalIpAddress)
-                || !IPAddress.IsLoopback(conn.RemoteIpAddress))
+            if (!IsSafeLoopback())
                 return View("AccessDenied");
 
             if (!AccountOptions.EnableAutoLogin || !AccountOptions.AutoLoginUsers.Contains(username))
@@ -205,7 +208,7 @@ namespace IdentityServerHost.Quickstart.UI
             if (user == null)
                 return View("AccessDenied");
 
-            await _events.RaiseAsync(new UserLoginSuccessEvent(user.Username, user.SubjectId, user.Username));
+            await _events.RaiseAsync(new UserLoginSuccessEvent(user.Username, user.SubjectId, user.Username), CancellationToken.None);
 
             var isuser = new IdentityServerUser(user.SubjectId)
             {
@@ -217,7 +220,7 @@ namespace IdentityServerHost.Quickstart.UI
             // otherwise just establish the session and go home.
             if (!string.IsNullOrEmpty(returnUrl))
             {
-                var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
+                var context = await _interaction.GetAuthorizationContextAsync(returnUrl, CancellationToken.None);
                 if (context != null)
                     return Redirect(returnUrl);
             }
@@ -229,17 +232,14 @@ namespace IdentityServerHost.Quickstart.UI
         {
             // Local dev only: passwordless auto-login must never be reachable off-loopback,
             // otherwise anyone could impersonate a configured user with no password.
-            var conn = HttpContext.Connection;
-            if (conn.LocalIpAddress == null || conn.RemoteIpAddress == null
-                || !IPAddress.IsLoopback(conn.LocalIpAddress)
-                || !IPAddress.IsLoopback(conn.RemoteIpAddress))
+            if (!IsSafeLoopback())
                 return View("AccessDenied");
 
             var user = _users.FindByUsername(username);
             if (user == null)
                 return View("AccessDenied");
 
-            await _events.RaiseAsync(new UserLoginSuccessEvent(user.Username, user.SubjectId, user.Username, clientId: context.Client?.ClientId));
+            await _events.RaiseAsync(new UserLoginSuccessEvent(user.Username, user.SubjectId, user.Username, clientId: context.Client?.ClientId), CancellationToken.None);
 
             var isuser = new IdentityServerUser(user.SubjectId)
             {
@@ -289,7 +289,7 @@ namespace IdentityServerHost.Quickstart.UI
                 await HttpContext.SignOutAsync();
 
                 // raise the logout event
-                await _events.RaiseAsync(new UserLogoutSuccessEvent(User.GetSubjectId(), User.GetDisplayName()));
+                await _events.RaiseAsync(new UserLogoutSuccessEvent(User.GetSubjectId(), User.GetDisplayName()), CancellationToken.None);
             }
 
             // check if we need to trigger sign-out at an upstream identity provider
@@ -313,16 +313,34 @@ namespace IdentityServerHost.Quickstart.UI
             return View();
         }
 
+        // Passwordless auto-login is only safe on a genuine loopback connection.
+        // Reject proxied/tunnelled requests: a forwarded client/host/proto header means
+        // RemoteIpAddress is unreliable and we may actually be reachable off-loopback.
+        private bool IsSafeLoopback()
+        {
+            var req = HttpContext.Request;
+            if (req.Headers.ContainsKey("X-Forwarded-For")
+                || req.Headers.ContainsKey("X-Forwarded-Host")
+                || req.Headers.ContainsKey("X-Forwarded-Proto"))
+                return false;
+
+            var conn = HttpContext.Connection;
+            return conn.LocalIpAddress != null
+                && conn.RemoteIpAddress != null
+                && IPAddress.IsLoopback(conn.LocalIpAddress)
+                && IPAddress.IsLoopback(conn.RemoteIpAddress);
+        }
+
 
         /*****************************************/
         /* helper APIs for the AccountController */
         /*****************************************/
         private async Task<LoginViewModel> BuildLoginViewModelAsync(string returnUrl)
         {
-            var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
+            var context = await _interaction.GetAuthorizationContextAsync(returnUrl, CancellationToken.None);
             if (context?.IdP != null && await _schemeProvider.GetSchemeAsync(context.IdP) != null)
             {
-                var local = context.IdP == IdentityServer4.IdentityServerConstants.LocalIdentityProvider;
+                var local = context.IdP == Duende.IdentityServer.IdentityServerConstants.LocalIdentityProvider;
 
                 // this is meant to short circuit the UI and only trigger the one external IdP
                 var vm = new LoginViewModel
@@ -353,7 +371,7 @@ namespace IdentityServerHost.Quickstart.UI
             var allowLocal = true;
             if (context?.Client.ClientId != null)
             {
-                var client = await _clientStore.FindEnabledClientByIdAsync(context.Client.ClientId);
+                var client = await _clientStore.FindEnabledClientByIdAsync(context.Client.ClientId, CancellationToken.None);
                 if (client != null)
                 {
                     allowLocal = client.EnableLocalLogin;
@@ -394,7 +412,7 @@ namespace IdentityServerHost.Quickstart.UI
                 return vm;
             }
 
-            var context = await _interaction.GetLogoutContextAsync(logoutId);
+            var context = await _interaction.GetLogoutContextAsync(logoutId, CancellationToken.None);
             if (context?.ShowSignoutPrompt == false)
             {
                 // it's safe to automatically sign-out
@@ -410,7 +428,7 @@ namespace IdentityServerHost.Quickstart.UI
         private async Task<LoggedOutViewModel> BuildLoggedOutViewModelAsync(string logoutId)
         {
             // get context information (client name, post logout redirect URI and iframe for federated signout)
-            var logout = await _interaction.GetLogoutContextAsync(logoutId);
+            var logout = await _interaction.GetLogoutContextAsync(logoutId, CancellationToken.None);
 
             var vm = new LoggedOutViewModel
             {
@@ -424,9 +442,12 @@ namespace IdentityServerHost.Quickstart.UI
             if (User?.Identity.IsAuthenticated == true)
             {
                 var idp = User.FindFirst(JwtClaimTypes.IdentityProvider)?.Value;
-                if (idp != null && idp != IdentityServer4.IdentityServerConstants.LocalIdentityProvider)
+                if (idp != null && idp != Duende.IdentityServer.IdentityServerConstants.LocalIdentityProvider)
                 {
-                    var providerSupportsSignout = await HttpContext.GetSchemeSupportsSignOutAsync(idp);
+                    // Duende 8 / ASP.NET Core 10 removed GetSchemeSupportsSignOutAsync and
+                    // IAuthenticationSchemeProvider.GetHandlerAsync; check the scheme's handler type instead.
+                    var scheme = await _schemeProvider.GetSchemeAsync(idp);
+                    var providerSupportsSignout = scheme != null && typeof(IAuthenticationSignOutHandler).IsAssignableFrom(scheme.HandlerType);
                     if (providerSupportsSignout)
                     {
                         if (vm.LogoutId == null)
@@ -434,7 +455,7 @@ namespace IdentityServerHost.Quickstart.UI
                             // if there's no current logout context, we need to create one
                             // this captures necessary info from the current logged in user
                             // before we signout and redirect away to the external IdP for signout
-                            vm.LogoutId = await _interaction.CreateLogoutContextAsync();
+                            vm.LogoutId = await _interaction.CreateLogoutContextAsync(CancellationToken.None);
                         }
 
                         vm.ExternalAuthenticationScheme = idp;

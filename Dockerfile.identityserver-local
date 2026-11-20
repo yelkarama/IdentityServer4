@@ -1,8 +1,10 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 WORKDIR /src
 
-# Copy IdentityServer4 sample project
+# Copy the Central Package Management file so versionless PackageReferences
+# (e.g. Serilog.AspNetCore) resolve during restore, then copy the project.
+COPY samples/Quickstarts/Directory.Build.targets ./
 COPY samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/*.csproj ./
 RUN dotnet restore
 
@@ -12,8 +14,8 @@ COPY samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/ ./
 # Build the project
 RUN dotnet publish -c Release -o /app/publish
 
-# Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:6.0
+# Runtime stage — the app targets net10.0, so it must run on the .NET 10 runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 
 WORKDIR /app
 

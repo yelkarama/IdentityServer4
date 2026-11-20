@@ -1,9 +1,9 @@
-using IdentityModel;
-using IdentityServer4;
-using IdentityServer4.Events;
-using IdentityServer4.Services;
-using IdentityServer4.Stores;
-using IdentityServer4.Test;
+using Duende.IdentityModel;
+using Duende.IdentityServer;
+using Duende.IdentityServer.Events;
+using Duende.IdentityServer.Services;
+using Duende.IdentityServer.Stores;
+using Duende.IdentityServer.Test;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace IdentityServerHost.Quickstart.UI
@@ -55,8 +56,9 @@ namespace IdentityServerHost.Quickstart.UI
             // validate returnUrl - either it is a valid OIDC URL or back to a local page
             if (Url.IsLocalUrl(returnUrl) == false && _interaction.IsValidReturnUrl(returnUrl) == false)
             {
-                // user might have clicked on a malicious link - should be logged
-                throw new Exception("invalid return URL");
+                // potential open-redirect attempt: log and refuse the challenge
+                _logger.LogWarning("Open-redirect attempt in Challenge: {ReturnUrl}", returnUrl);
+                return BadRequest("Invalid return URL");
             }
             
             // start challenge and roundtrip the return URL and scheme 
@@ -84,7 +86,8 @@ namespace IdentityServerHost.Quickstart.UI
             var result = await HttpContext.AuthenticateAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
             if (result?.Succeeded != true)
             {
-                throw new Exception("External authentication error");
+                _logger.LogError("External authentication failed for scheme {Scheme}", IdentityServerConstants.ExternalCookieAuthenticationScheme);
+                return Redirect("~/");
             }
 
             if (_logger.IsEnabled(LogLevel.Debug))
@@ -127,8 +130,8 @@ namespace IdentityServerHost.Quickstart.UI
             var returnUrl = result.Properties.Items["returnUrl"] ?? "~/";
 
             // check if external login is in the context of an OIDC request
-            var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
-            await _events.RaiseAsync(new UserLoginSuccessEvent(provider, providerUserId, user.SubjectId, user.Username, true, context?.Client.ClientId));
+            var context = await _interaction.GetAuthorizationContextAsync(returnUrl, CancellationToken.None);
+            await _events.RaiseAsync(new UserLoginSuccessEvent(provider, providerUserId, user.SubjectId, user.Username, true, context?.Client.ClientId), CancellationToken.None);
 
             if (context != null)
             {
@@ -150,15 +153,19 @@ namespace IdentityServerHost.Quickstart.UI
             // try to determine the unique id of the external user (issued by the provider)
             // the most common claim type for that are the sub claim and the NameIdentifier
             // depending on the external provider, some other claim type might be used
-            var userIdClaim = externalUser.FindFirst(JwtClaimTypes.Subject) ??
-                              externalUser.FindFirst(ClaimTypes.NameIdentifier) ??
-                              throw new Exception("Unknown userid");
+            var userIdClaim = externalUser.FindFirst(JwtClaimTypes.Subject)
+                              ?? externalUser.FindFirst(ClaimTypes.NameIdentifier);
 
             // remove the user id claim so we don't include it as an extra claim if/when we provision the user
             var claims = externalUser.Claims.ToList();
             claims.Remove(userIdClaim);
 
             var provider = result.Properties.Items["scheme"];
+            if (userIdClaim == null)
+            {
+                _logger.LogWarning("External identity missing subject id for scheme {Scheme}", provider);
+                return (null, provider, null, Enumerable.Empty<Claim>());
+            }
             var providerUserId = userIdClaim.Value;
 
             // find external user

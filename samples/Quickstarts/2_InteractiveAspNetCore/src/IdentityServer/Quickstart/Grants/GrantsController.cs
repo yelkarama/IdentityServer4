@@ -2,15 +2,16 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
-using IdentityServer4.Services;
-using IdentityServer4.Stores;
+using Duende.IdentityServer.Services;
+using Duende.IdentityServer.Stores;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading;
 using Microsoft.AspNetCore.Authorization;
-using IdentityServer4.Events;
-using IdentityServer4.Extensions;
+using Duende.IdentityServer.Events;
+using Duende.IdentityServer.Extensions;
 
 namespace IdentityServerHost.Quickstart.UI
 {
@@ -53,23 +54,23 @@ namespace IdentityServerHost.Quickstart.UI
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Revoke(string clientId)
         {
-            await _interaction.RevokeUserConsentAsync(clientId);
-            await _events.RaiseAsync(new GrantsRevokedEvent(User.GetSubjectId(), clientId));
+            await _interaction.RevokeUserConsentAsync(clientId, CancellationToken.None);
+            await _events.RaiseAsync(new GrantsRevokedEvent(User.GetSubjectId(), clientId), CancellationToken.None);
 
             return RedirectToAction("Index");
         }
 
         private async Task<GrantsViewModel> BuildViewModelAsync()
         {
-            var grants = await _interaction.GetAllUserGrantsAsync();
+            var grants = await _interaction.GetAllUserGrantsAsync(CancellationToken.None);
 
             var list = new List<GrantViewModel>();
             foreach(var grant in grants)
             {
-                var client = await _clients.FindClientByIdAsync(grant.ClientId);
+                var client = await _clients.FindClientByIdAsync(grant.ClientId, CancellationToken.None);
                 if (client != null)
                 {
-                    var resources = await _resources.FindResourcesByScopeAsync(grant.Scopes);
+                    var resources = await _resources.FindResourcesByScopeAsync(grant.Scopes, CancellationToken.None);
 
                     var item = new GrantViewModel()
                     {
