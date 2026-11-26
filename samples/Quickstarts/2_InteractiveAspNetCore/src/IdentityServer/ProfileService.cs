@@ -27,14 +27,7 @@ namespace IdentityServer
             {
                 // ALWAYS include accountNt claim (CRITICAL for OSCAR)
                 var claims = user.Claims.ToList();
-                
-                // DEBUG: Log what we're sending
-                Console.WriteLine($"[ProfileService] Adding claims to {context.Caller}:");
-                foreach (var claim in claims)
-                {
-                    Console.WriteLine($"  - {claim.Type}: {claim.Value}");
-                }
-                
+
                 // Add ALL user claims to both ID token and access token
                 // This ensures accountNt is ALWAYS present, regardless of requested scopes
                 context.IssuedClaims.AddRange(claims);

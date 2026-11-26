@@ -13,11 +13,12 @@ namespace IdentityServer
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            // Configure cookies for local development
+            // Application session cookie. The IdP is served over HTTPS only
+            // (https://localhost:5001), so the cookie must never traverse HTTP.
             services.ConfigureApplicationCookie(options =>
             {
                 options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
-                options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.None;
+                options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
             });
             
             services.AddControllersWithViews();
@@ -92,13 +93,6 @@ namespace IdentityServer
             Console.WriteLine("  - Access Token Lifetime: 10 seconds");
             Console.WriteLine("  - Refresh Token: OneTimeOnly (rotating)");
             Console.WriteLine("  - Callback: /oauth2/callback");
-            Console.WriteLine("");
-            Console.WriteLine("Test Users:");
-            Console.WriteLine("  - oscardoc / mac2002 (accountNt: oscardoc) ⭐ PRIMARY USER");
-            Console.WriteLine("  - testdoc1 / password (accountNt: testdoc1)");
-            Console.WriteLine("  - testdoc2 / password (accountNt: testdoc2)");
-            Console.WriteLine("  - admin / password (accountNt: admin)");
-            Console.WriteLine("  - azureuser / password (accountNt: azureuser)");
             Console.WriteLine("");
             Console.WriteLine("Endpoints:");
             Console.WriteLine("  - Discovery: /.well-known/openid-configuration");

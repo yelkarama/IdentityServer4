@@ -14,7 +14,9 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
+using System.Net;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -34,12 +36,14 @@ namespace IdentityServerHost.Quickstart.UI
         private readonly IClientStore _clientStore;
         private readonly IAuthenticationSchemeProvider _schemeProvider;
         private readonly IEventService _events;
+        private readonly ILogger<AccountController> _logger;
 
         public AccountController(
             IIdentityServerInteractionService interaction,
             IClientStore clientStore,
             IAuthenticationSchemeProvider schemeProvider,
             IEventService events,
+            ILogger<AccountController> logger = null,
             TestUserStore users = null)
         {
             // if the TestUserStore is not in DI, then we'll just use the global users collection
@@ -50,6 +54,7 @@ namespace IdentityServerHost.Quickstart.UI
             _clientStore = clientStore;
             _schemeProvider = schemeProvider;
             _events = events;
+            _logger = logger;
         }
 
         /// <summary>
@@ -168,8 +173,9 @@ namespace IdentityServerHost.Quickstart.UI
                     }
                     else
                     {
-                        // user might have clicked on a malicious link - should be logged
-                        throw new Exception("invalid return URL");
+                        // potential open-redirect attempt: log and fall back to home
+                        _logger.LogWarning("Open-redirect attempt after login: {ReturnUrl}", model.ReturnUrl);
+                        return Redirect("~/");
                     }
                 }
 
@@ -189,6 +195,11 @@ namespace IdentityServerHost.Quickstart.UI
         [AllowAnonymous]
         public async Task<IActionResult> AutoLogin(string username, string returnUrl = null)
         {
+            // Local dev only: passwordless auto-login must never be reachable off-loopback,
+            // otherwise anyone could impersonate a configured user with no password.
+            if (!IsSafeLoopback())
+                return View("AccessDenied");
+
             if (!AccountOptions.EnableAutoLogin || !AccountOptions.AutoLoginUsers.Contains(username))
                 return View("AccessDenied");
 
@@ -218,6 +229,11 @@ namespace IdentityServerHost.Quickstart.UI
 
         private async Task<IActionResult> AutoSignInAsync(AuthorizationRequest context, string username, string returnUrl)
         {
+            // Local dev only: passwordless auto-login must never be reachable off-loopback,
+            // otherwise anyone could impersonate a configured user with no password.
+            if (!IsSafeLoopback())
+                return View("AccessDenied");
+
             var user = _users.FindByUsername(username);
             if (user == null)
                 return View("AccessDenied");
@@ -294,6 +310,25 @@ namespace IdentityServerHost.Quickstart.UI
         public IActionResult AccessDenied()
         {
             return View();
+        }
+
+
+        // Passwordless auto-login is only safe on a genuine loopback connection.
+        // Reject proxied/tunnelled requests: a forwarded client/host/proto header means
+        // RemoteIpAddress is unreliable and we may actually be reachable off-loopback.
+        private bool IsSafeLoopback()
+        {
+            var req = HttpContext.Request;
+            if (req.Headers.ContainsKey("X-Forwarded-For")
+                || req.Headers.ContainsKey("X-Forwarded-Host")
+                || req.Headers.ContainsKey("X-Forwarded-Proto"))
+                return false;
+
+            var conn = HttpContext.Connection;
+            return conn.LocalIpAddress != null
+                && conn.RemoteIpAddress != null
+                && IPAddress.IsLoopback(conn.LocalIpAddress)
+                && IPAddress.IsLoopback(conn.RemoteIpAddress);
         }
 
 
