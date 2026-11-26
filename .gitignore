@@ -216,3 +216,6 @@ src/IdentityServer4/host/identityserver.db
 tempkey.jwk
 
 .idea
+
+# stray publish output
+samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/idp/
