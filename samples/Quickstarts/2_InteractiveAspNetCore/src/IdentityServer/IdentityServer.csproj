@@ -5,7 +5,12 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="IdentityServer4" Version="4.1.2" />
+    <!-- Local fork source (not the NuGet package): adds a TimeProvider ctor overload. -->
+    <ProjectReference Include="../../../../../src/IdentityServer4/src/IdentityServer4.csproj" />
+
+    <!-- In the Docker image the IS4 source sits in IdentityServer4/ inside this
+         project's directory; keep its files out of this project's compile glob. -->
+    <Compile Remove="IdentityServer4/**" />
 
     <PackageReference Include="Serilog.AspNetCore" Version="3.4.0" />
 

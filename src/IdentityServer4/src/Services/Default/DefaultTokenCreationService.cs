@@ -49,7 +49,14 @@ namespace IdentityServer4.Services
         /// <param name="keys">The keys.</param>
         /// <param name="options">The options.</param>
         /// <param name="logger">The logger.</param>
-        public DefaultTokenCreationService(
+        // Private on .NET 8+ so DI sees a single public ctor (TimeProvider); both
+        // ISystemClock and TimeProvider are registered, so two public ctors are ambiguous.
+#if NET8_0_OR_GREATER
+        private
+#else
+        public
+#endif
+        DefaultTokenCreationService(
             ISystemClock clock,
             IKeyMaterialService keys,
             IdentityServerOptions options,
@@ -60,6 +67,21 @@ namespace IdentityServer4.Services
             Options = options;
             Logger = logger;
         }
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DefaultTokenCreationService"/> class
+        /// using a <see cref="TimeProvider"/> (fork addition; .NET 8+ only).
+        /// </summary>
+        public DefaultTokenCreationService(
+            TimeProvider clock,
+            IKeyMaterialService keys,
+            IdentityServerOptions options,
+            ILogger<DefaultTokenCreationService> logger)
+            : this(new TimeProviderClock(clock), keys, options, logger)
+        {
+        }
+#endif
 
         /// <summary>
         /// Creates the token.
@@ -137,4 +159,23 @@ namespace IdentityServer4.Services
             return Task.FromResult(handler.WriteToken(jwt));
         }
     }
+
+#if NET8_0_OR_GREATER
+    // Bridges TimeProvider to the legacy ISystemClock ctor parameter. ISystemClock is
+    // obsolete (use TimeProvider) but is still the parameter type of the primary
+    // constructor, so the bridge itself must reference it.
+#pragma warning disable CS0618
+    internal sealed class TimeProviderClock : ISystemClock
+    {
+        private readonly TimeProvider _timeProvider;
+
+        public TimeProviderClock(TimeProvider timeProvider)
+        {
+            _timeProvider = timeProvider;
+        }
+
+        public DateTimeOffset UtcNow => _timeProvider.GetUtcNow();
+    }
+#pragma warning restore CS0618
+#endif
 }
