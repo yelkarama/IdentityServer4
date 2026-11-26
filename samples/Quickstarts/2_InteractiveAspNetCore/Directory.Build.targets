@@ -11,6 +11,8 @@
         <PackageReference Update="Microsoft.AspNetCore.Authentication.JwtBearer" Version="$(AspNetVersion)" />
         <PackageReference Update="Microsoft.AspNetCore.Authentication.Google" Version="$(AspNetVersion)" />
 
+        <PackageReference Update="System.IdentityModel.Tokens.Jwt" Version="5.7.2" />
+
         <!--
           Bump a transitive dependency: IdentityServer4 4.1.2 pulls
           Newtonsoft.Json 12.0.2 (known high-severity CVE, GHSA-5crp-9r3c-p9vr).

@@ -1,6 +1,7 @@
 using IdentityServer4.Services;
 using IdentityServer4.Models;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Threading.Tasks;
 using System.IdentityModel.Tokens.Jwt;
 using IdentityServer4.Configuration;
@@ -14,19 +15,14 @@ namespace IdentityServer
     /// </summary>
     public class CustomJwtTokenCreationService : DefaultTokenCreationService
     {
-        // ISystemClock is the ASP.NET Core type (Microsoft.AspNetCore.Authentication),
-        // obsolete in favour of TimeProvider — but IS4's DefaultTokenCreationService
-        // base constructor still requires it, so the parameter is forced.
-#pragma warning disable CS0618
         public CustomJwtTokenCreationService(
-            ISystemClock clock,
+            TimeProvider clock,
             IKeyMaterialService keys,
             IdentityServerOptions options,
             ILogger<DefaultTokenCreationService> logger)
             : base(clock, keys, options, logger)
         {
         }
-#pragma warning restore CS0618
 
         protected override Task<JwtHeader> CreateHeaderAsync(Token token)
         {
