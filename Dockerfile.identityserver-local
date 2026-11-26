@@ -5,13 +5,7 @@ WORKDIR /src
 # SDK pin + centralized package versions (shadow the repo-root ones)
 COPY samples/Quickstarts/2_InteractiveAspNetCore/global.json samples/Quickstarts/2_InteractiveAspNetCore/Directory.Build.targets ./
 
-# Copy the local IS4 source (ProjectReference from the sample csproj).
-# The fork's src/Directory.Build.targets goes under IdentityServer4/ so it is
-# the nearest targets file for the IS4 project — the quickstart-local one at
-# ./ still applies to the sample (nearest-first import).
-COPY src/IdentityServer4/src/ ./IdentityServer4/src/
-COPY src/Directory.Build.targets ./IdentityServer4/Directory.Build.targets
-COPY key.snk icon.jpg /
+COPY icon.jpg /
 
 # Copy IdentityServer4 sample project
 COPY samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/*.csproj ./
