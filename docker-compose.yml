@@ -23,5 +23,11 @@ networks:
     driver: bridge
 
 volumes:
+  # Pre-existing daemon volumes (no compose labels); external so compose
+  # adopts them instead of warning. Holds DP + signing keys — don't recreate.
   dp-keys:
+    external: true
+    name: idp_dp-keys
   is-keys:
+    external: true
+    name: idp_is-keys
