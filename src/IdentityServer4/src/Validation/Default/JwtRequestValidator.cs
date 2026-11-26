@@ -211,6 +211,10 @@ namespace IdentityServer4.Validation
                         case JArray jarr:
                             payload.Add(key, jarr.ToString(Formatting.None));
                             break;
+                        // SI.T.Jwt 8.x returns JSON-typed claims as JsonElement
+                        case System.Text.Json.JsonElement je:
+                            payload.Add(key, je.GetRawText());
+                            break;
                     }
                 }
             }

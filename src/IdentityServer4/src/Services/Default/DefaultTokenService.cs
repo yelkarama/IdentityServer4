@@ -7,10 +7,9 @@ using IdentityServer4.Configuration;
 using IdentityServer4.Extensions;
 using IdentityServer4.Models;
 using IdentityServer4.Stores;
-using Microsoft.AspNetCore.Authentication;
+using System;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -51,7 +50,7 @@ namespace IdentityServer4.Services
         /// <summary>
         /// The clock
         /// </summary>
-        protected readonly ISystemClock Clock;
+        protected readonly TimeProvider Clock;
 
         /// <summary>
         /// The key material service
@@ -79,7 +78,7 @@ namespace IdentityServer4.Services
             IReferenceTokenStore referenceTokenStore,
             ITokenCreationService creationService,
             IHttpContextAccessor contextAccessor,
-            ISystemClock clock,
+            TimeProvider clock,
             IKeyMaterialService keyMaterialService,
             IdentityServerOptions options,
             ILogger<DefaultTokenService> logger)
@@ -125,7 +124,7 @@ namespace IdentityServer4.Services
             }
 
             // add iat claim
-            claims.Add(new Claim(JwtClaimTypes.IssuedAt, Clock.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64));
+            claims.Add(new Claim(JwtClaimTypes.IssuedAt, Clock.GetUtcNow().ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64));
 
             // add at_hash claim
             if (request.AccessTokenToHash.IsPresent())
@@ -161,7 +160,7 @@ namespace IdentityServer4.Services
 
             var token = new Token(OidcConstants.TokenTypes.IdentityToken)
             {
-                CreationTime = Clock.UtcNow.UtcDateTime,
+                CreationTime = Clock.GetUtcNow().UtcDateTime,
                 Audiences = { request.ValidatedRequest.Client.ClientId },
                 Issuer = issuer,
                 Lifetime = request.ValidatedRequest.Client.IdentityTokenLifetime,
@@ -203,13 +202,13 @@ namespace IdentityServer4.Services
             }
             
             // iat claim as required by JWT profile
-            claims.Add(new Claim(JwtClaimTypes.IssuedAt, Clock.UtcNow.ToUnixTimeSeconds().ToString(),
+            claims.Add(new Claim(JwtClaimTypes.IssuedAt, Clock.GetUtcNow().ToUnixTimeSeconds().ToString(),
                 ClaimValueTypes.Integer64));
 
             var issuer = ContextAccessor.HttpContext.GetIdentityServerIssuerUri();
             var token = new Token(OidcConstants.TokenTypes.AccessToken)
             {
-                CreationTime = Clock.UtcNow.UtcDateTime,
+                CreationTime = Clock.GetUtcNow().UtcDateTime,
                 Issuer = issuer,
                 Lifetime = request.ValidatedRequest.AccessTokenLifetime,
                 Claims = claims.Distinct(new ClaimComparer()).ToList(),

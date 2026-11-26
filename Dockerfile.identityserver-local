@@ -2,15 +2,17 @@ FROM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 
 WORKDIR /src
 
-# SDK pin + centralized package versions (shadow the repo-root ones)
-COPY samples/Quickstarts/2_InteractiveAspNetCore/global.json samples/Quickstarts/2_InteractiveAspNetCore/Directory.Build.targets ./
+# SDK pin (shadows the repo-root one)
+COPY samples/Quickstarts/2_InteractiveAspNetCore/global.json ./
 
 # Copy the local IS4 source (ProjectReference from the sample csproj).
-# The fork's src/Directory.Build.targets goes under IdentityServer4/ so it is
-# the nearest targets file for the IS4 project — the quickstart-local one at
-# ./ still applies to the sample (nearest-first import).
+# The shared src/Directory.Build.targets goes to ./ so it is the nearest
+# targets file for the sample AND where the IS4-local file's ../ import
+# resolves. The IS4-local Directory.Build.targets (overrides FrameworkVersion
+# to 11.0.0 + test pins) goes under IdentityServer4/ for the IS4 project.
 COPY src/IdentityServer4/src/ ./IdentityServer4/src/
-COPY src/Directory.Build.targets ./IdentityServer4/Directory.Build.targets
+COPY src/Directory.Build.targets ./Directory.Build.targets
+COPY src/IdentityServer4/Directory.Build.targets ./IdentityServer4/Directory.Build.targets
 COPY key.snk icon.jpg /
 
 # Copy IdentityServer4 sample project

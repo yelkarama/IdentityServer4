@@ -14,7 +14,6 @@ using IdentityServer4.Services;
 using IdentityServer4.Configuration;
 using IdentityServer4.Stores;
 using IdentityServer4.ResponseHandling;
-using Microsoft.AspNetCore.Authentication;
 using System.Text.Encodings.Web;
 
 namespace IdentityServer4.Endpoints.Results
@@ -33,7 +32,7 @@ namespace IdentityServer4.Endpoints.Results
             IdentityServerOptions options,
             IUserSession userSession,
             IMessageStore<ErrorMessage> errorMessageStore,
-            ISystemClock clock)
+            TimeProvider clock)
             : this(response)
         {
             _options = options;
@@ -45,14 +44,14 @@ namespace IdentityServer4.Endpoints.Results
         private IdentityServerOptions _options;
         private IUserSession _userSession;
         private IMessageStore<ErrorMessage> _errorMessageStore;
-        private ISystemClock _clock;
+        private TimeProvider _clock;
 
         private void Init(HttpContext context)
         {
             _options = _options ?? context.RequestServices.GetRequiredService<IdentityServerOptions>();
             _userSession = _userSession ?? context.RequestServices.GetRequiredService<IUserSession>();
             _errorMessageStore = _errorMessageStore ?? context.RequestServices.GetRequiredService<IMessageStore<ErrorMessage>>();
-            _clock = _clock ?? context.RequestServices.GetRequiredService<ISystemClock>();
+            _clock = _clock ?? context.RequestServices.GetRequiredService<TimeProvider>();
         }
 
         public async Task ExecuteAsync(HttpContext context)
@@ -132,7 +131,7 @@ namespace IdentityServer4.Endpoints.Results
             var referrer_policy = "no-referrer";
             if (!context.Response.Headers.ContainsKey("Referrer-Policy"))
             {
-                context.Response.Headers.Add("Referrer-Policy", referrer_policy);
+                context.Response.Headers["Referrer-Policy"] = referrer_policy;
             }
         }
 
@@ -192,7 +191,7 @@ namespace IdentityServer4.Endpoints.Results
                 errorModel.ResponseMode = Response.Request.ResponseMode;
             }
 
-            var message = new Message<ErrorMessage>(errorModel, _clock.UtcNow.UtcDateTime);
+            var message = new Message<ErrorMessage>(errorModel, _clock.GetUtcNow().UtcDateTime);
             var id = await _errorMessageStore.WriteAsync(message);
 
             var errorUrl = _options.UserInteraction.ErrorUrl;

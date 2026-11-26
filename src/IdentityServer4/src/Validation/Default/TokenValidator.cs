@@ -18,7 +18,6 @@ using IdentityServer4.Stores;
 using IdentityServer4.Configuration;
 using IdentityServer4.Logging.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Authentication;
 
 namespace IdentityServer4.Validation
 {
@@ -32,7 +31,7 @@ namespace IdentityServer4.Validation
         private readonly IClientStore _clients;
         private readonly IProfileService _profile;
         private readonly IKeyMaterialService _keys;
-        private readonly ISystemClock _clock;
+        private readonly TimeProvider _clock;
         private readonly TokenValidationLog _log;
 
         public TokenValidator(
@@ -44,7 +43,7 @@ namespace IdentityServer4.Validation
             IRefreshTokenStore refreshTokenStore,
             ICustomTokenValidator customValidator,
             IKeyMaterialService keys,
-            ISystemClock clock,
+            TimeProvider clock,
             ILogger<TokenValidator> logger)
         {
             _options = options;
@@ -359,7 +358,7 @@ namespace IdentityServer4.Validation
                 return Invalid(OidcConstants.ProtectedResourceErrors.InvalidToken);
             }
 
-            if (token.CreationTime.HasExceeded(token.Lifetime, _clock.UtcNow.UtcDateTime))
+            if (token.CreationTime.HasExceeded(token.Lifetime, _clock.GetUtcNow().UtcDateTime))
             {
                 LogError("Token expired.");
 

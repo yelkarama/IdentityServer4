@@ -5,6 +5,9 @@
 using FluentAssertions;
 using IdentityModel.Client;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using System.Linq;
 using System.Net.Http;
@@ -22,9 +25,15 @@ namespace IdentityServer.IntegrationTests.Clients
 
         public DiscoveryClientTests()
         {
-            var builder = new WebHostBuilder()
-                .UseStartup<Startup>();
-            var server = new TestServer(builder);
+            var host = new HostBuilder()
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseTestServer();
+                    webBuilder.UseStartup<Startup>();
+                })
+                .Build();
+                host.Start();
+            var server = (TestServer)host.Services.GetRequiredService<IServer>();
 
             _client = server.CreateClient();
         }

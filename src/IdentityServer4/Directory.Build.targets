@@ -1,0 +1,26 @@
+<Project>
+
+  <!-- Nearest-first: applies to the IS4 sln's 4 projects only. The shared
+       src/Directory.Build.targets still pins the sibling fork slns (AspNet
+       Identity/EF/Storage) to 3.1 — this file imports it, then overrides. -->
+  <Import Project="../Directory.Build.targets" />
+
+  <PropertyGroup>
+    <FrameworkVersion>11.0.0</FrameworkVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The 11.0.0 OpenIdConnect stack requires this; overrides the shared
+         src/Directory.Build.targets 5.7.2 pin (NU1605 downgrade). -->
+    <PackageReference Update="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.19.2" />
+
+    <!-- Protocols.OpenIdConnect 8.19.2 requires this; overrides the shared
+         [5.7.2,6.0) pin (NU1605 downgrade). -->
+    <PackageReference Update="System.IdentityModel.Tokens.Jwt" Version="8.19.2" />
+
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="18.12.0" />
+    <PackageReference Update="xunit" Version="2.9.3" />
+    <PackageReference Update="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+
+</Project>

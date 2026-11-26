@@ -4,10 +4,9 @@
 
 using IdentityModel;
 using IdentityServer4.Models;
-using Microsoft.AspNetCore.Authentication;
+using System;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
@@ -31,14 +30,14 @@ namespace IdentityServer4.Extensions
         /// <returns></returns>
         /// <exception cref="Exception">
         /// </exception>
-        public static JwtPayload CreateJwtPayload(this Token token, ISystemClock clock, IdentityServerOptions options, ILogger logger)
+        public static JwtPayload CreateJwtPayload(this Token token, TimeProvider clock, IdentityServerOptions options, ILogger logger)
         {
             var payload = new JwtPayload(
                 token.Issuer,
                 null,
                 null,
-                clock.UtcNow.UtcDateTime,
-                clock.UtcNow.UtcDateTime.AddSeconds(token.Lifetime));
+                clock.GetUtcNow().UtcDateTime,
+                clock.GetUtcNow().UtcDateTime.AddSeconds(token.Lifetime));
 
             foreach (var aud in token.Audiences)
             {
@@ -103,12 +102,12 @@ namespace IdentityServer4.Extensions
                     if (group.Skip(1).Any())
                     {
                         // add as array
-                        payload.Add(group.Key, group.Select(x => x.JsonValue).ToArray());
+                        payload.Add(group.Key, group.Select(x => x.JsonValue.ToObject<Dictionary<string, object>>()).ToArray());
                     }
                     else
                     {
                         // add just one
-                        payload.Add(group.Key, group.First().JsonValue);
+                        payload.Add(group.Key, group.First().JsonValue.ToObject<Dictionary<string, object>>());
                     }
                 }
 
@@ -122,11 +121,17 @@ namespace IdentityServer4.Extensions
                             $"Can't add two claims where one is a JSON array and the other is not a JSON array ({group.Key})");
                     }
 
-                    var newArr = new List<JToken>();
+                    // SI.T.Jwt 8.x serializes Newtonsoft JToken values incorrectly,
+                    // so convert to plain .NET objects (ponytail: nested arrays in
+                    // array-valued claims still serialize as JTokens)
+                    var newArr = new List<object>();
                     foreach (var arrays in group)
                     {
                         var arr = (JArray)arrays.JsonValue;
-                        newArr.AddRange(arr);
+                        foreach (var t in arr)
+                        {
+                            newArr.Add(t.Type == JTokenType.Object ? (object)t.ToObject<Dictionary<string, object>>() : t.ToObject<object>());
+                        }
                     }
 
                     // add just one array for the group/key/claim type

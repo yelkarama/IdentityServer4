@@ -31,7 +31,9 @@ namespace IdentityServer.IntegrationTests.Endpoints.Authorize
         private readonly IdentityServerPipeline _mockPipeline = new IdentityServerPipeline();
         private readonly Client _client;
 
-        private readonly string _symmetricJwk = @"{ 'kty': 'oct', 'use': 'sig', 'kid': '1', 'k': 'nYA-IFt8xTsdBHe9hunvizcp3Dt7f6qGqudq18kZHNtvqEGjJ9Ud-9x3kbQ-LYfLHS3xM2MpFQFg1JzT_0U_F8DI40oby4TvBDGszP664UgA8_5GjB7Flnrlsap1NlitvNpgQX3lpyTvC2zVuQ-UVsXbBDAaSBUSlnw7SE4LM8Ye2WYZrdCCXL8yAX9vIR7vf77yvNTEcBCI6y4JlvZaqMB4YKVSfygs8XqGGCHjLpE5bvI-A4ESbAUX26cVFvCeDg9pR6HK7BmwPMlO96krgtKZcXEJtUELYPys6-rbwAIdmxJxKxpgRpt0FRv_9fm6YPwG7QivYBX-vRwaodL1TA', 'alg': 'HS256'}";
+        // SI.T.Jwt 8.x deserializes JWKs with System.Text.Json, which (unlike
+        // Newtonsoft in 5.7.2) rejects the single-quoted form this used to be
+        private readonly string _symmetricJwk = @"{ ""kty"": ""oct"", ""use"": ""sig"", ""kid"": ""1"", ""k"": ""nYA-IFt8xTsdBHe9hunvizcp3Dt7f6qGqudq18kZHNtvqEGjJ9Ud-9x3kbQ-LYfLHS3xM2MpFQFg1JzT_0U_F8DI40oby4TvBDGszP664UgA8_5GjB7Flnrlsap1NlitvNpgQX3lpyTvC2zVuQ-UVsXbBDAaSBUSlnw7SE4LM8Ye2WYZrdCCXL8yAX9vIR7vf77yvNTEcBCI6y4JlvZaqMB4YKVSfygs8XqGGCHjLpE5bvI-A4ESbAUX26cVFvCeDg9pR6HK7BmwPMlO96krgtKZcXEJtUELYPys6-rbwAIdmxJxKxpgRpt0FRv_9fm6YPwG7QivYBX-vRwaodL1TA"", ""alg"": ""HS256""}";
         private readonly RsaSecurityKey _rsaKey;
 
         public JwtRequestAuthorizeTests()
@@ -174,6 +176,9 @@ namespace IdentityServer.IntegrationTests.Endpoints.Authorize
         {
             var handler = new JwtSecurityTokenHandler();
             handler.OutboundClaimTypeMap.Clear();
+            // SI.T.Jwt 8.x defaults this to false; 5.7.2 defaulted to true, which
+            // these tests relied on for the exp claim
+            handler.SetDefaultTimesOnTokenCreation = true;
 
             var token = handler.CreateJwtSecurityToken(
                 issuer: issuer, 

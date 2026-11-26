@@ -21,6 +21,8 @@ using IdentityServer4.Test;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -76,29 +78,35 @@ namespace IdentityServer.IntegrationTests.Common
 
         public void Initialize(string basePath = null, bool enableLogging = false)
         {
-            var builder = new WebHostBuilder();
-            builder.ConfigureServices(ConfigureServices);
-            builder.Configure(app=>
+            var hostBuilder = new HostBuilder();
+            hostBuilder.ConfigureServices(ConfigureServices);
+            hostBuilder.ConfigureWebHostDefaults(webBuilder =>
             {
-                if (basePath != null)
+                webBuilder.UseTestServer();
+                webBuilder.Configure(app=>
                 {
-                    app.Map(basePath, map =>
+                    if (basePath != null)
                     {
-                        ConfigureApp(map);
-                    });
-                }
-                else
-                {
-                    ConfigureApp(app);
-                }
+                        app.Map(basePath, map =>
+                        {
+                            ConfigureApp(map);
+                        });
+                    }
+                    else
+                    {
+                        ConfigureApp(app);
+                    }
+                });
             });
 
             if (enableLogging)
             {
-                builder.ConfigureLogging((ctx, b) => b.AddConsole());
+                hostBuilder.ConfigureLogging((ctx, b) => b.AddConsole());
             }
 
-            Server = new TestServer(builder);
+            var host = hostBuilder.Build();
+            host.Start();
+            Server = (TestServer)host.Services.GetRequiredService<IServer>();
             Handler = Server.CreateHandler();
             
             BrowserClient = new BrowserClient(new BrowserHandler(Handler));

@@ -12,7 +12,6 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication;
 using IdentityServer4.Configuration;
 
 namespace IdentityServer4.ResponseHandling
@@ -46,7 +45,7 @@ namespace IdentityServer4.ResponseHandling
         /// <summary>
         /// The clock
         /// </summary>
-        protected readonly ISystemClock Clock;
+        protected readonly TimeProvider Clock;
 
         /// <summary>
         /// The key material service
@@ -63,7 +62,7 @@ namespace IdentityServer4.ResponseHandling
         /// <param name="authorizationCodeStore">The authorization code store.</param>
         /// <param name="events">The events.</param>
         public AuthorizeResponseGenerator(
-            ISystemClock clock,
+            TimeProvider clock,
             ITokenService tokenService,
             IKeyMaterialService keyMaterialService,
             IAuthorizationCodeStore authorizationCodeStore,
@@ -240,7 +239,7 @@ namespace IdentityServer4.ResponseHandling
 
             var code = new AuthorizationCode
             {
-                CreationTime = Clock.UtcNow.UtcDateTime,
+                CreationTime = Clock.GetUtcNow().UtcDateTime,
                 ClientId = request.Client.ClientId,
                 Lifetime = request.Client.AuthorizationCodeLifetime,
                 Subject = request.Subject,

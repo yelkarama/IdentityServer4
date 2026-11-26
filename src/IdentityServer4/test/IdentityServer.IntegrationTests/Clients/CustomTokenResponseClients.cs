@@ -13,6 +13,9 @@ using IdentityModel;
 using IdentityModel.Client;
 using IdentityServer.IntegrationTests.Clients.Setup;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -28,9 +31,15 @@ namespace IdentityServer.IntegrationTests.Clients
 
         public CustomTokenResponseClients()
         {
-            var builder = new WebHostBuilder()
-                .UseStartup<StartupWithCustomTokenResponses>();
-            var server = new TestServer(builder);
+            var host = new HostBuilder()
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseTestServer();
+                    webBuilder.UseStartup<StartupWithCustomTokenResponses>();
+                })
+                .Build();
+                host.Start();
+            var server = (TestServer)host.Services.GetRequiredService<IServer>();
 
             _client = server.CreateClient();
         }
