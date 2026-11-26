@@ -1,6 +1,9 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 
 WORKDIR /src
+
+# SDK pin + centralized package versions (shadow the repo-root ones)
+COPY samples/Quickstarts/2_InteractiveAspNetCore/global.json samples/Quickstarts/2_InteractiveAspNetCore/Directory.Build.targets ./
 
 # Copy IdentityServer4 sample project
 COPY samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/*.csproj ./
@@ -13,9 +16,13 @@ COPY samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/ ./
 RUN dotnet publish -c Release -o /app/publish
 
 # Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:6.0
+FROM mcr.microsoft.com/dotnet/aspnet:11.0
 
 WORKDIR /app
+
+# Data protection keys dir — 700 so ProtectKeysWithFileSystemPermissions accepts it
+# (named volumes are initialized from this image directory)
+RUN mkdir -p /app/dp-keys && chmod 700 /app/dp-keys
 
 # Copy published output (includes wwwroot, Views, etc)
 COPY --from=build /app/publish .

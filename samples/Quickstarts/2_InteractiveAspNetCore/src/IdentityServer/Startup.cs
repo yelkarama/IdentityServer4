@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.IO;
 using IdentityServer4.Services;
 
 namespace IdentityServer
@@ -19,6 +21,17 @@ namespace IdentityServer
             });
             
             services.AddControllersWithViews();
+
+            // Persist data protection keys (auth cookies/antiforgery) to a stable
+            // location so they survive container recreation. In Docker, mount a
+            // volume at DATAPROTECTION_KEYS_DIR. On Linux the key ring writes key
+            // files with 0600 permissions, so the "no XML encryptor" startup
+            // warning is informational (encryptors are DPAPI/X509, neither fits
+            // a Linux container).
+            var keysDir = Environment.GetEnvironmentVariable("DATAPROTECTION_KEYS_DIR")
+                ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".oscar-idp", "DataProtection-Keys");
+            services.AddDataProtection()
+                .PersistKeysToFileSystem(new DirectoryInfo(keysDir));
 
             var builder = services.AddIdentityServer(options =>
             {
@@ -42,8 +55,13 @@ namespace IdentityServer
             // Override token creation to use "JWT" instead of "at+jwt" for legacy compatibility
             builder.Services.AddTransient<ITokenCreationService, CustomJwtTokenCreationService>();
 
-            // For development only - use developer signing credential
-            builder.AddDeveloperSigningCredential();
+            // For development only - use developer signing credential.
+            // IS4 4.x persists it as a JWK file (default: tempkey.jwk in the
+            // working dir). In Docker, point IS_SIGNING_KEY_PATH at a
+            // volume-mounted path so issued tokens survive container recreation.
+            var signingKeyPath = Environment.GetEnvironmentVariable("IS_SIGNING_KEY_PATH")
+                ?? Path.Combine(Directory.GetCurrentDirectory(), "tempkey.jwk");
+            builder.AddDeveloperSigningCredential(filename: signingKeyPath);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

@@ -9,6 +9,11 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:5555
       - ASPNETCORE_ENVIRONMENT=Development
+      - DATAPROTECTION_KEYS_DIR=/app/dp-keys
+      - IS_SIGNING_KEY_PATH=/root/.identityserver/tempkey.jwk
+    volumes:
+      - dp-keys:/app/dp-keys
+      - is-keys:/root/.identityserver
     networks:
       - oscar-network
     restart: always
@@ -16,3 +21,7 @@ services:
 networks:
   oscar-network:
     driver: bridge
+
+volumes:
+  dp-keys:
+  is-keys:
