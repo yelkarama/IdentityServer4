@@ -14,6 +14,10 @@ namespace IdentityServer
     /// </summary>
     public class CustomJwtTokenCreationService : DefaultTokenCreationService
     {
+        // ISystemClock is the ASP.NET Core type (Microsoft.AspNetCore.Authentication),
+        // obsolete in favour of TimeProvider — but IS4's DefaultTokenCreationService
+        // base constructor still requires it, so the parameter is forced.
+#pragma warning disable CS0618
         public CustomJwtTokenCreationService(
             ISystemClock clock,
             IKeyMaterialService keys,
@@ -22,6 +26,7 @@ namespace IdentityServer
             : base(clock, keys, options, logger)
         {
         }
+#pragma warning restore CS0618
 
         protected override Task<JwtHeader> CreateHeaderAsync(Token token)
         {
