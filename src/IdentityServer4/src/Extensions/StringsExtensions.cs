@@ -163,7 +163,10 @@ namespace IdentityServer4.Extensions
                 // url doesn't start with "//" or "/\"
                 if (url[1] != '/' && url[1] != '\\')
                 {
-                    return true;
+                    // CVE-2024-39694: browsers strip control characters before
+                    // following a redirect, so "/\t/evil.com" would reach a
+                    // third party. Reject any control character (Duende fix).
+                    return !HasControlCharacter(url.AsSpan(1));
                 }
 
                 return false;
@@ -181,13 +184,27 @@ namespace IdentityServer4.Extensions
                 // url doesn't start with "~//" or "~/\"
                 if (url[2] != '/' && url[2] != '\\')
                 {
-                    return true;
+                    // CVE-2024-39694: see above
+                    return !HasControlCharacter(url.AsSpan(2));
                 }
 
                 return false;
             }
 
             return false;
+
+            static bool HasControlCharacter(ReadOnlySpan<char> s)
+            {
+                for (var i = 0; i < s.Length; i++)
+                {
+                    if (char.IsControl(s[i]))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
         }
 
         [DebuggerStepThrough]
