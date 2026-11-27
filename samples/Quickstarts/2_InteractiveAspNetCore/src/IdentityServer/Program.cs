@@ -9,6 +9,8 @@ using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using Microsoft.Extensions.Hosting;
 
 namespace IdentityServer
@@ -17,6 +19,16 @@ namespace IdentityServer
     {
         public static int Main(string[] args)
         {
+            var info = typeof(Program).Assembly
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+                ?? "unknown";
+
+            if (args.Any(a => a == "--version"))
+            {
+                Console.WriteLine($"OSCAR IdentityServer {info}");
+                return 0;
+            }
+
             // Reset the log file on every (re)start of the service, before the
             // file sink opens it (an open file cannot be deleted on Windows).
             var logFile = "idp.log";
@@ -37,6 +49,7 @@ namespace IdentityServer
 
             try
             {
+                Log.Information("OSCAR IdentityServer {Version}", info);
                 Log.Information("Starting host...");
                 CreateHostBuilder(args).Build().Run();
                 return 0;

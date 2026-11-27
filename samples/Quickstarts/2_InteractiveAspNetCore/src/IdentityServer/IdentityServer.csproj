@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net11.0</TargetFramework>
+    <BuildTime>$([System.DateTime]::Now.ToString('yyyy-MM-dd HH:mm:ss zzz'))</BuildTime>
   </PropertyGroup>
   
   <ItemGroup>
@@ -20,4 +21,16 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="11.0.0" />
   </ItemGroup>
     
+  <Target Name="EmbedGitInfo" BeforeTargets="GetAssemblyVersion">
+    <Exec Command="git rev-parse --short HEAD" ConsoleToMSBuild="true"
+          ContinueOnError="true" StandardOutputImportance="Low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitId" />
+    </Exec>
+    <PropertyGroup>
+      <GitCommitId Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('$(GitCommitId)', '^[0-9a-f]{7,40}\s*$'))">unknown</GitCommitId>
+      <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+      <InformationalVersion>$(GitCommitId) (built $(BuildTime))</InformationalVersion>
+    </PropertyGroup>
+  </Target>
+
 </Project>
