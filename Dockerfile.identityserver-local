@@ -10,7 +10,8 @@ COPY samples/Quickstarts/2_InteractiveAspNetCore/global.json ./
 # targets file for the sample AND where the IS4-local file's ../ import
 # resolves. The IS4-local Directory.Build.targets (overrides FrameworkVersion
 # to 11.0.0 + test pins) goes under IdentityServer4/ for the IS4 project.
-COPY src/IdentityServer4/src/ ./IdentityServer4/src/
+# Exclude bin/obj: local builds rewrite them and would bust the restore cache
+COPY --exclude=bin --exclude=obj src/IdentityServer4/src/ ./IdentityServer4/src/
 COPY src/Directory.Build.targets ./Directory.Build.targets
 COPY src/IdentityServer4/Directory.Build.targets ./IdentityServer4/Directory.Build.targets
 COPY key.snk icon.jpg /
@@ -20,7 +21,7 @@ COPY samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/*.csproj ./
 RUN dotnet restore
 
 # Copy all source files
-COPY samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/ ./
+COPY --exclude=bin --exclude=obj samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/ ./
 
 # .git so the build can embed the commit id (build stage only, not in the image)
 COPY .git ./
