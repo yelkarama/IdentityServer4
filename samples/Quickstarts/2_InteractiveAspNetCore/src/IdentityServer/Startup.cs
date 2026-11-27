@@ -86,25 +86,26 @@ namespace IdentityServer
             });
             
             // Log startup info
-            Console.WriteLine("=========================================");
-            Console.WriteLine("IdentityServer4 for OSCAR EMR Testing");
-            Console.WriteLine("=========================================");
-            Console.WriteLine("");
-            Console.WriteLine("Configuration:");
-            Console.WriteLine("  - Client ID: EMR-client");
-            Console.WriteLine("  - Access Token Lifetime: 10 seconds");
-            Console.WriteLine("  - Refresh Token: OneTimeOnly (rotating)");
-            Console.WriteLine("  - Callback: /oauth2/callback");
-            Console.WriteLine("");
-            Console.WriteLine("Endpoints:");
-            Console.WriteLine("  - Discovery: /.well-known/openid-configuration");
-            Console.WriteLine("  - Authorize: /connect/authorize");
-            Console.WriteLine("  - Token: /connect/token");
-            Console.WriteLine("  - UserInfo: /connect/userinfo");
-            Console.WriteLine("  - End Session: /connect/endsession");
-            Console.WriteLine("");
-            Console.WriteLine("NOTE: Access tokens expire in 10 seconds to test race conditions!");
-            Console.WriteLine("=========================================");
+            Log.Information(
+                "=========================================\n" +
+                "IdentityServer4 for OSCAR EMR Testing\n" +
+                "=========================================\n" +
+                "\n" +
+                "Configuration:\n" +
+                "  - Client ID: EMR-client\n" +
+                "  - Access Token Lifetime: 10 seconds\n" +
+                "  - Refresh Token: OneTimeOnly (rotating)\n" +
+                "  - Callback: /oauth2/callback\n" +
+                "\n" +
+                "Endpoints:\n" +
+                "  - Discovery: /.well-known/openid-configuration\n" +
+                "  - Authorize: /connect/authorize\n" +
+                "  - Token: /connect/token\n" +
+                "  - UserInfo: /connect/userinfo\n" +
+                "  - End Session: /connect/endsession\n" +
+                "\n" +
+                "NOTE: Access tokens expire in 10 seconds to test race conditions!\n" +
+                "=========================================");
             Log.Information("Build: {Version}", typeof(Startup).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown");
         }
     }
