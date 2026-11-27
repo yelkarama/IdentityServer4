@@ -95,6 +95,11 @@ if (-not $idpZip) {
 Write-Host "    IdP zip: $($idpZip.FullName)"
 
 Write-Step "Placing the IdP at $AppDir..."
+$runningSvc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+if ($runningSvc -and $runningSvc.Status -eq 'Running') {
+    Write-Host "    Stopping running service '$ServiceName'..."
+    Stop-Service -Name $ServiceName -Force
+}
 $Holder = Join-Path $DevtoolsRoot ('idp-extract-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
 Expand-Zip $idpZip.FullName $Holder          # zip is rooted at 'idp/' -> $Holder\idp\...
 
