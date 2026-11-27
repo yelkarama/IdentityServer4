@@ -70,7 +70,31 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 function Expand-Zip($zip, $dest) {
     if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
     New-Item -ItemType Directory -Force $dest | Out-Null
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($zip, $dest)
+    $archive = [System.IO.Compression.ZipFile]::OpenRead($zip)
+    try {
+        $entries = $archive.Entries
+        $i = 0
+        foreach ($entry in $entries) {
+            $i++
+            $target = [System.IO.Path]::GetFullPath((Join-Path $dest $entry.FullName))
+            # Zip-slip guard (ExtractToDirectory does this for us; keep it in the manual loop).
+            if (-not $target.StartsWith($dest, [System.StringComparison]::OrdinalIgnoreCase)) {
+                throw "Illegal path in zip: $($entry.FullName)"
+            }
+            if ($entry.FullName.EndsWith('/')) {
+                New-Item -ItemType Directory -Force $target | Out-Null
+            } else {
+                New-Item -ItemType Directory -Force (Split-Path $target -Parent) | Out-Null
+                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $target, $true)
+            }
+            Write-Progress -Activity "Extracting $(Split-Path $zip -Leaf)" `
+                -Status "$i / $($entries.Count)" `
+                -PercentComplete (($i / $entries.Count) * 100)
+        }
+    } finally {
+        $archive.Dispose()
+        Write-Progress -Activity "Extracting $(Split-Path $zip -Leaf)" -Completed
+    }
 }
 
 # ---- Servy -----------------------------------------------------------------
