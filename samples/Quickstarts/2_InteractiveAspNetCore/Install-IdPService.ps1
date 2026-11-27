@@ -27,7 +27,7 @@ $ErrorActionPreference = 'Stop'
 # sets a floor, so PowerShell 7 (Core, v7+) would still pass. Gate on the edition
 # too, which rejects pwsh and any non-Windows PowerShell. The param block must be
 # the first statement in the script, so this gate lives just below it.
-if ($PSVersionTable.PSEdition -ne 'Windows' -or $PSVersionTable.PowerShellVersion -lt [version]'5.1') {
+if ($PSVersionTable.PSEdition -ne 'Desktop' -or $PSVersionTable.PSVersion -lt [version]'5.1') {
     Write-Error "This script requires Windows PowerShell 5.1. It will not run under PowerShell 7 (pwsh). Open a Windows PowerShell 5.1 session and try again."
     exit 1
 }
@@ -40,7 +40,7 @@ $DevtoolsRoot = 'C:\Devtools'
 $AppDir       = 'C:\Devtools\idp'
 $ServyDir     = Join-Path $DevtoolsRoot 'servy'
 $DropZone     = '\\S10001\grpreg$\dropzone\Younes\idp'
-$ServyZip    = Join-Path $DropZone 'servy-10.8-net48-portable.zip'
+$ServyZip    = Join-Path $DropZone 'servy-10.8-net48-x64-portable.zip'
 
 function Write-Step { param($m) Write-Host ("`n==> {0}" -f $m) -ForegroundColor Cyan }
 
@@ -149,7 +149,7 @@ if ($LASTEXITCODE -ne 0) {
 Write-Step "Starting service '$ServiceName'..."
 & $servyExe start -n $ServiceName -q
 Start-Sleep -Seconds 3
-$svc = Get-Service -Id $ServiceName -ErrorAction SilentlyContinue
+$svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
 if (-not $svc -or $svc.Status -ne 'Running') {
     Write-Error "Service is not Running (status: $($svc.Status)). Check the Windows Services console."
     exit 1
@@ -168,3 +168,38 @@ Write-Host "  App dir     : $AppDir" -ForegroundColor Gray
 Write-Host "  Signing key : $AppDir\tempkey.jwk (persists across restarts)" -ForegroundColor Gray
 Write-Host "  Manage      : & '$servyExe' start|stop|remove -n $ServiceName" -ForegroundColor Gray
 Write-Host "  Uninstall   : .\Install-IdPService.ps1 -Uninstall" -ForegroundColor Gray
+
+# SIG # Begin signature block
+# MIIF0QYJKoZIhvcNAQcCoIIFwjCCBb4CAQExDzANBglghkgBZQMEAgEFADB5Bgor
+# BgEEAYI3AgEEoGswaTA0BgorBgEEAYI3AgEeMCYCAwEAAAQQH8w7YFlLCE63JNLG
+# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCCXjLE2drQUMySt
+# NHO5xKk+GfZc7UbkNFB/YWl1JJ1ReqCCAzIwggMuMIICFqADAgECAhAhSLhs/t+s
+# sE0ywLK2GzohMA0GCSqGSIb3DQEBCwUAMC8xLTArBgNVBAMMJFlvdW5lcyBFbCBr
+# YXJhbWEgLSBPU0NBUiBJZFAgc2NyaXB0czAeFw0yNjExMjcxNDQ3NTVaFw0yNzEx
+# MjcxNTA3NTVaMC8xLTArBgNVBAMMJFlvdW5lcyBFbCBrYXJhbWEgLSBPU0NBUiBJ
+# ZFAgc2NyaXB0czCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALmQ/x0h
+# AjUtuGrG+8CKUuDvbKHooUrk9NNUmmN5KpP5VjECVrVpxkd2m9ZuTr/RUD5MXm1d
+# Y8olaGMlfSyIYLtnQciQPD5TthbK8UyBf02+rTZqfZq3/KKhLB/YasxA5OVL6qIM
+# KTrzem/L2sU0gDzq0FQE5p1IxMSMB9Wd23+QcJcmNxw0JB1DumMzsRVnxNGJnjON
+# 9NUeYFRhhPdH0bi/HaD4bcFmPZUYov8GeAgXxfi9dTaBCaUX2z/vegXVxFyuzTvA
+# Y8aLzXz5t2FPs/qITTHeABkCgCkQl4JvA9vxPFcuTgm0kcVxtMPuspF8EfIVekAt
+# bPVtBOGJ0N4a8LkCAwEAAaNGMEQwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoG
+# CCsGAQUFBwMDMB0GA1UdDgQWBBQBBR2mTeoUich6XSG5cMn8pbbhVjANBgkqhkiG
+# 9w0BAQsFAAOCAQEAtEexZHGPVKyrJat3LQfYfr5/cPkzoidMc+xX3SAV+2L0eqzj
+# YHjW/v+Cy6OnuLqS/DPTF4aCXhoBg7+qtKd8GRW2Siylph3hFVw8zDo4xUih3ctW
+# PxN4nCgwNkWS77GouHuPgXHkTd1V0b65UiMeh6pFsnvdysi8J5WaF39WgShEDMvS
+# 3zzqIG6WkUxcGpOqUQLWfeAZ3WevrmUsHO3c0xakt3OoWMhV80onAOx7bbYcjbrr
+# cdCeZfFVka7Rf1NdWO4NTK9KsiYu/rs31vKFZIfNKOFnQ2SuH1NvSG6PSJUG+2ad
+# PDZftG6qYlPkCjLvlFERBeHUIQqhCi+rzctMszGCAfUwggHxAgEBMEMwLzEtMCsG
+# A1UEAwwkWW91bmVzIEVsIGthcmFtYSAtIE9TQ0FSIElkUCBzY3JpcHRzAhAhSLhs
+# /t+ssE0ywLK2GzohMA0GCWCGSAFlAwQCAQUAoIGEMBgGCisGAQQBgjcCAQwxCjAI
+# oAKAAKECgAAwGQYJKoZIhvcNAQkDMQwGCisGAQQBgjcCAQQwHAYKKwYBBAGCNwIB
+# CzEOMAwGCisGAQQBgjcCARUwLwYJKoZIhvcNAQkEMSIEILtPSr3oL2kLeDdtrMfS
+# rZXrmebWm+SuNO3uR1kBhepCMA0GCSqGSIb3DQEBAQUABIIBAHgMDsmvLtRRBFvS
+# S40TvJHvZx5myXrWPqOyX/HubEXbwMnJ/5fMdGlHH1FlLdEwYl2UP4AmINjt3vI7
+# QwMn46R3qQ+1ukskIJBrIRTt+Aqh43Cms4EWRw9rBiYHWK/sFaT67ENPBb+mXeSo
+# IOHtUcXLAeuCnU8EpM/gz+fH53CVzPWOsduwJM17DBrEFOM7khUavAmN4ariRP4P
+# S6e7AronXlE8NBVbdn/U1W4Ypqv6KL5V7JuslkCIPSTgAHFe1n3hqqMasMRZ1ENT
+# 9GkGXQAcnIYWOLrpDtzua7clCG88wl21yFvH5BqntvY9q509GE+YA0otFEGnPzYB
+# JFD5wBc=
+# SIG # End signature block
