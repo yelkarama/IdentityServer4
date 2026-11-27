@@ -17,6 +17,11 @@ namespace IdentityServer
     {
         public static int Main(string[] args)
         {
+            // Reset the log file on every (re)start of the service, before the
+            // file sink opens it (an open file cannot be deleted on Windows).
+            var logFile = "idp.log";
+            if (File.Exists(logFile)) File.Delete(logFile);
+
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
@@ -32,10 +37,6 @@ namespace IdentityServer
 
             try
             {
-                // Reset the log file on every (re)start of the service.
-                var logFile = "idp.log";
-                if (File.Exists(logFile)) File.Delete(logFile);
-
                 Log.Information("Starting host...");
                 CreateHostBuilder(args).Build().Run();
                 return 0;
