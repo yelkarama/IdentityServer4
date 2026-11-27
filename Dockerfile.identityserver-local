@@ -12,22 +12,27 @@ COPY samples/Quickstarts/2_InteractiveAspNetCore/global.json ./
 # to 11.0.0 + test pins) goes under IdentityServer4/ for the IS4 project.
 # Exclude bin/obj: local builds rewrite them and would bust the restore cache
 COPY --exclude=bin --exclude=obj src/IdentityServer4/src/ ./IdentityServer4/src/
+# EF storage source (ProjectReference from the sample csproj)
+COPY --exclude=bin --exclude=obj src/EntityFramework.Storage/src/ ./EntityFramework.Storage/src/
 COPY src/Directory.Build.targets ./Directory.Build.targets
+# The sample targets net11.0: EF Core 3.1 (the shared pin) cannot run on it,
+# so bump the EF pins for the container build.
+RUN sed -i 's|^</Project>|<PropertyGroup><EntityFrameworkVersion>11.0.0</EntityFrameworkVersion></PropertyGroup>\n</Project>|' ./Directory.Build.targets
 COPY src/IdentityServer4/Directory.Build.targets ./IdentityServer4/Directory.Build.targets
 COPY key.snk icon.jpg /
 
 # Copy IdentityServer4 sample project
-COPY samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/*.csproj ./
-RUN dotnet restore
+COPY samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/*.csproj ./app/
+RUN dotnet restore app/
 
 # Copy all source files
-COPY --exclude=bin --exclude=obj samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/ ./
+COPY --exclude=bin --exclude=obj samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/ ./app/
 
 # .git so the build can embed the commit id (build stage only, not in the image)
 COPY .git ./
 
 # Build the project
-RUN dotnet publish -c Release -o /app/publish
+RUN dotnet publish app/ -c Release -o /app/publish
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:11.0

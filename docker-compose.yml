@@ -11,9 +11,11 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - DATAPROTECTION_KEYS_DIR=/app/dp-keys
       - IS_SIGNING_KEY_PATH=/root/.identityserver/tempkey.jwk
+      - IS_GRANTS_DB_PATH=/app/db/idp.db
     volumes:
       - dp-keys:/app/dp-keys
       - is-keys:/root/.identityserver
+      - is-grants:/app/db
     networks:
       - oscar-network
     restart: always
@@ -31,3 +33,6 @@ volumes:
   is-keys:
     external: true
     name: idp_is-keys
+  is-grants:
+    external: true
+    name: idp_is-grants

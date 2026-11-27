@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>IdentityServer4.EntityFramework.Storage</PackageId>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net11.0</TargetFrameworks>
     
     <Description>EntityFramework persistence layer for IdentityServer4</Description>
     <Authors>Brock Allen;Dominick Baier;Scott Brady</Authors>
@@ -35,6 +35,8 @@
     <PackageReference Include="IdentityServer4.Storage" />
     
     <PackageReference Include="AutoMapper" />
+    <!-- Bump transitive dependency (via IdentityServer4.Storage) to a patched version. -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />

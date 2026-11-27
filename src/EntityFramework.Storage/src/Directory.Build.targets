@@ -1,0 +1,11 @@
+<Project>
+  <!-- Nearest-first: inherit the shared src/ targets, then bump EF Core for
+       this net11.0 project. EF Core 3.1's DbSet<T> implements both
+       IQueryable<T> and IAsyncEnumerable<T>, which no longer compiles against
+       the .NET 11 BCL (System.Linq.AsyncEnumerable makes every DbSet .Where()
+       ambiguous); the app runs on EF Core 11 anyway. -->
+  <Import Project="../../Directory.Build.targets" />
+  <PropertyGroup>
+    <EntityFrameworkVersion>11.0.0</EntityFrameworkVersion>
+  </PropertyGroup>
+</Project>

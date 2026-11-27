@@ -7,7 +7,12 @@ using System;
 using System.IO;
 using System.Reflection;
 using Serilog;
+using IdentityServer4.EntityFramework.DbContexts;
+using IdentityServer4.EntityFramework.Storage;
+using IdentityServer4.EntityFramework.Stores;
 using IdentityServer4.Services;
+using IdentityServer4.Stores;
+using Microsoft.EntityFrameworkCore;
 
 namespace IdentityServer
 {
@@ -35,6 +40,14 @@ namespace IdentityServer
                 ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".oscar-idp", "DataProtection-Keys");
             services.AddDataProtection()
                 .PersistKeysToFileSystem(new DirectoryInfo(keysDir));
+
+            // Persisted grants (refresh tokens) in SQLite so they survive
+            // restarts. Registered before AddIdentityServer so its in-memory
+            // TryAddSingleton<IPersistedGrantStore> is skipped.
+            var grantsDb = Environment.GetEnvironmentVariable("IS_GRANTS_DB_PATH")
+                ?? Path.Combine(Directory.GetCurrentDirectory(), "idp.db");
+            services.AddOperationalDbContext(o => o.ConfigureDbContext = b => b.UseSqlite($"Data Source={grantsDb}"));
+            services.AddTransient<IPersistedGrantStore, PersistedGrantStore>();
 
             var builder = services.AddIdentityServer(options =>
             {
@@ -69,6 +82,10 @@ namespace IdentityServer
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // Create the SQLite schema on first run (no migrations for SQLite in the fork).
+            using (var scope = app.ApplicationServices.CreateScope())
+                scope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().Database.EnsureCreated();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

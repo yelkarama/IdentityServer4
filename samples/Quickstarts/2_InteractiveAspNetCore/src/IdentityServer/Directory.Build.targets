@@ -1,0 +1,13 @@
+<Project>
+
+  <!-- Nearest-first: inherit the parent targets (quickstart-level locally,
+       the shared src/ targets in the Docker image), then bump EF Core for
+       this net11.0 project. EF Core 3.1 cannot run on .NET 11 (the EF
+       storage ProjectReference has its own local override). -->
+  <Import Project="../Directory.Build.targets" Condition="Exists('../Directory.Build.targets')" />
+
+  <PropertyGroup>
+    <EntityFrameworkVersion>11.0.0</EntityFrameworkVersion>
+  </PropertyGroup>
+
+</Project>

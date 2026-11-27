@@ -19,6 +19,11 @@
 
     <!-- Windows service support so the IdP can run natively (UseWindowsService). -->
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="11.0.0" />
+
+    <!-- Persisted grants (refresh tokens) in SQLite so they survive restarts.
+         Local fork source, like the core IS4 reference above. -->
+    <ProjectReference Include="../../../../../src/EntityFramework.Storage/src/IdentityServer4.EntityFramework.Storage.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="11.0.0" />
   </ItemGroup>
     
   <Target Name="EmbedGitInfo" BeforeTargets="GetAssemblyVersion">

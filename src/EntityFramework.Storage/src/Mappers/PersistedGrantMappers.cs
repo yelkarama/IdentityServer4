@@ -3,6 +3,7 @@
 
 
 using AutoMapper;
+using Microsoft.Extensions.Logging.Abstractions;
 using IdentityServer4.Models;
 
 namespace IdentityServer4.EntityFramework.Mappers
@@ -14,7 +15,7 @@ namespace IdentityServer4.EntityFramework.Mappers
     {
         static PersistedGrantMappers()
         {
-            Mapper = new MapperConfiguration(cfg =>cfg.AddProfile<PersistedGrantMapperProfile>())
+            Mapper = new MapperConfiguration(cfg => cfg.AddProfile<PersistedGrantMapperProfile>(), NullLoggerFactory.Instance)
                 .CreateMapper();
         }
 
