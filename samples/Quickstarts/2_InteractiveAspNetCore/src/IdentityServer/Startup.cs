@@ -5,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.IO;
+using System.Reflection;
+using Serilog;
 using IdentityServer4.Services;
 
 namespace IdentityServer
@@ -103,6 +105,7 @@ namespace IdentityServer
             Console.WriteLine("");
             Console.WriteLine("NOTE: Access tokens expire in 10 seconds to test race conditions!");
             Console.WriteLine("=========================================");
+            Log.Information("Build: {Version}", typeof(Startup).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown");
         }
     }
 }
