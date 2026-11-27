@@ -39,6 +39,7 @@ $Description = 'OSCAR local OIDC identity server (runs without Docker).'
 $DevtoolsRoot = 'C:\Devtools'
 $AppDir       = 'C:\Devtools\idp'
 $ServyDir     = Join-Path $DevtoolsRoot 'servy'
+$ServyExe     = Join-Path $ServyDir 'servy-10.8-net48-x64-portable\servy-cli.exe'
 $DropZone     = '\\S10001\grpreg$\dropzone\Younes\idp'
 $ServyZip    = Join-Path $DropZone 'servy-10.8-net48-x64-portable.zip'
 
@@ -59,8 +60,7 @@ if (-not $isAdmin) {
 # ---- Uninstall path --------------------------------------------------------
 if ($Uninstall) {
     Write-Step "Removing service '$ServiceName'..."
-    $servyExe = Join-Path $ServyDir 'servy-cli.exe'
-    if (Test-Path $servyExe) { & $servyExe remove -n $ServiceName -q }
+    if (Test-Path $ServyExe) { & $ServyExe remove -n $ServiceName -q }
     else { sc.exe delete $ServiceName }
     Write-Host "Done." -ForegroundColor Green
     exit 0
@@ -74,16 +74,16 @@ function Expand-Zip($zip, $dest) {
 }
 
 # ---- Servy -----------------------------------------------------------------
-if (-not (Test-Path $ServyZip)) {
-    Write-Error "Servy zip not found at $ServyZip. Place servy-10.8-net48-portable.zip in $DropZone."
-    exit 1
+if (-not (Test-Path $ServyExe)) {
+    if (-not (Test-Path $ServyZip)) {
+        Write-Error "Servy zip not found at $ServyZip. Place servy-10.8-net48-x64-portable.zip in $DropZone."
+        exit 1
+    }
+    Write-Step "Extracting Servy..."
+    Expand-Zip $ServyZip $ServyDir
+    if (-not (Test-Path $ServyExe)) { Write-Error "servy-cli.exe not found at $ServyExe after extraction."; exit 1 }
 }
-Write-Step "Extracting Servy..."
-Expand-Zip $ServyZip $ServyDir
-$servy = Get-ChildItem -Path $ServyDir -Filter 'servy-cli.exe' -Recurse | Select-Object -First 1
-if (-not $servy) { Write-Error "servy-cli.exe not found inside $ServyZip."; exit 1 }
-$servyExe = $servy.FullName
-Write-Host "    Servy: $servyExe"
+Write-Host "    Servy: $ServyExe"
 
 # ---- Locate the IdP zip and place it at C:\Devtools\idp --------------------
 $idpZip = Get-ChildItem -Path $DropZone -Filter '*.zip' |
@@ -144,7 +144,7 @@ $installArgs = @(
     '--description', $Description,
     '-q'
 )
-& $servyExe @installArgs
+& $ServyExe @installArgs
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Servy install failed (exit $LASTEXITCODE)."
     exit 1
@@ -152,7 +152,7 @@ if ($LASTEXITCODE -ne 0) {
 
 # ---- Start + verify --------------------------------------------------------
 Write-Step "Starting service '$ServiceName'..."
-& $servyExe start -n $ServiceName -q
+& $ServyExe start -n $ServiceName -q
 Start-Sleep -Seconds 3
 $svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
 if (-not $svc -or $svc.Status -ne 'Running') {
@@ -171,7 +171,7 @@ try {
 Write-Host "`nService '$ServiceName' installed and running." -ForegroundColor Green
 Write-Host "  App dir     : $AppDir" -ForegroundColor Gray
 Write-Host "  Signing key : $AppDir\tempkey.jwk (persists across restarts)" -ForegroundColor Gray
-Write-Host "  Manage      : & '$servyExe' start|stop|remove -n $ServiceName" -ForegroundColor Gray
+Write-Host "  Manage      : & '$ServyExe' start|stop|remove -n $ServiceName" -ForegroundColor Gray
 Write-Host "  Uninstall   : .\Install-IdPService.ps1 -Uninstall" -ForegroundColor Gray
 
 # SIG # Begin signature block
