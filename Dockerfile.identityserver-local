@@ -22,6 +22,9 @@ RUN dotnet restore
 # Copy all source files
 COPY samples/Quickstarts/2_InteractiveAspNetCore/src/IdentityServer/ ./
 
+# .git so the build can embed the commit id (build stage only, not in the image)
+COPY .git ./
+
 # Build the project
 RUN dotnet publish -c Release -o /app/publish
 
