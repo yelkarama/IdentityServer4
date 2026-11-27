@@ -132,7 +132,7 @@ $startDir = $AppDir
 $installArgs = @(
     'install', '-n', $ServiceName,
     '-p', $exePath,
-    '--startupDir', "`"$startDir`\"",
+    '--startupDir', "`"$startDir`"",
     '--startupType', 'Automatic',
     '--envVars', "ASPNETCORE_URLS=http://+:5555;ASPNETCORE_ENVIRONMENT=Development",
     '--displayName', $DisplayName,
