@@ -21,7 +21,7 @@ The service is installed with the portable [Servy CLI](https://github.com/akrame
 
 ## 1. Prepare the dropzone
 
-Put both zips in `X:\dropzone\Younes\idp`:
+Put both zips in `\\S10001\grpreg$\dropzone\Younes\idp`:
 
 1. `servy-10.8-net48-portable.zip` (Servy, already there).
 2. The IdP zip — one of these two options:
@@ -34,7 +34,7 @@ Put both zips in `X:\dropzone\Younes\idp`:
    dotnet publish -c Release -r win-x64 --self-contained true -o "$env:TEMP\idp-build\idp"
 
    # Zip under a top-level 'idp/' folder so it extracts to C:\Devtools\idp
-   Compress-Archive -Path "$env:TEMP\idp-build\idp" -DestinationPath 'X:\dropzone\Younes\idp\idp-app.zip' -Force
+   Compress-Archive -Path "$env:TEMP\idp-build\idp" -DestinationPath '\\S10001\grpreg$\dropzone\Younes\idp\idp-app.zip' -Force
    ```
 
    Zip the output under a top-level `idp/` folder (as above) and drop it in the
@@ -75,9 +75,9 @@ curl -s http://localhost:5555/.well-known/openid-configuration
 # -> 200 + OIDC discovery metadata
 ```
 
-The signing key is written to `C:\Devtools\idp\keys\` and **persists across
+The signing key is written to `C:\Devtools\idp\tempkey.jwk` and **persists across
 restarts** (Servy pins the service's working directory with `--startupDir`). Do not
-delete that folder — a new key would invalidate already-issued tokens.
+delete that file — a new key would invalidate already-issued tokens.
 
 ## Manage the service
 

@@ -1,10 +1,3 @@
-# Windows PowerShell 5.1 only. `#Requires -Version 5.1` is NOT enough: it only
-# sets a floor, so PowerShell 7 (Core, v7+) would still pass. Gate on the edition
-# too, which rejects pwsh and any non-Windows PowerShell.
-if ($PSVersionTable.PSEdition -ne 'Windows' -or $PSVersionTable.PowerShellVersion -lt [version]'5.1') {
-    Write-Error "This script requires Windows PowerShell 5.1. It will not run under PowerShell 7 (pwsh). Open a Windows PowerShell 5.1 session and try again."
-    exit 1
-}
 <#
 .SYNOPSIS
     Install the OSCAR local IdentityServer as a Windows service (no Docker),
@@ -30,6 +23,15 @@ param([switch]$Uninstall)
 
 $ErrorActionPreference = 'Stop'
 
+# Windows PowerShell 5.1 only. `#Requires -Version 5.1` is NOT enough: it only
+# sets a floor, so PowerShell 7 (Core, v7+) would still pass. Gate on the edition
+# too, which rejects pwsh and any non-Windows PowerShell. The param block must be
+# the first statement in the script, so this gate lives just below it.
+if ($PSVersionTable.PSEdition -ne 'Windows' -or $PSVersionTable.PowerShellVersion -lt [version]'5.1') {
+    Write-Error "This script requires Windows PowerShell 5.1. It will not run under PowerShell 7 (pwsh). Open a Windows PowerShell 5.1 session and try again."
+    exit 1
+}
+
 # ---- Configuration ---------------------------------------------------------
 $ServiceName = 'idp'
 $DisplayName = 'OSCAR IdentityServer'
@@ -37,7 +39,7 @@ $Description = 'OSCAR local OIDC identity server (runs without Docker).'
 $DevtoolsRoot = 'C:\Devtools'
 $AppDir       = 'C:\Devtools\idp'
 $ServyDir     = Join-Path $DevtoolsRoot 'servy'
-$DropZone     = 'X:\dropzone\Younes\idp'
+$DropZone     = '\\S10001\grpreg$\dropzone\Younes\idp'
 $ServyZip    = Join-Path $DropZone 'servy-10.8-net48-portable.zip'
 
 function Write-Step { param($m) Write-Host ("`n==> {0}" -f $m) -ForegroundColor Cyan }
@@ -48,7 +50,9 @@ $isAdmin = ([Security.Principal.WindowsPrincipal] `
     [Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) {
     Write-Host "Re-launching elevated (accept the UAC prompt with your admin account)..." -ForegroundColor Yellow
-    Start-Process powershell -Verb RunAs -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath)
+    $relaunchArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath)
+    if ($Uninstall) { $relaunchArgs += '-Uninstall' }
+    Start-Process powershell -Verb RunAs -ArgumentList $relaunchArgs
     exit
 }
 
@@ -94,16 +98,16 @@ Write-Step "Placing the IdP at $AppDir..."
 $Holder = Join-Path $DevtoolsRoot ('idp-extract-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
 Expand-Zip $idpZip.FullName $Holder          # zip is rooted at 'idp/' -> $Holder\idp\...
 
-$keysBackup = $null
+$keyBackup = $null
 if (Test-Path $AppDir) {
-    if (Test-Path "$AppDir\keys") {
-        $keysBackup = Join-Path $Holder 'keys-preserve'
-        Copy-Item -Recurse "$AppDir\keys" $keysBackup
+    if (Test-Path "$AppDir\tempkey.jwk") {
+        $keyBackup = Join-Path $Holder 'tempkey.jwk'
+        Copy-Item "$AppDir\tempkey.jwk" $keyBackup
     }
     Remove-Item -Recurse -Force $AppDir
 }
 Move-Item "$Holder\idp" $AppDir
-if ($keysBackup) { Copy-Item -Recurse $keysBackup "$AppDir\keys" }
+if ($keyBackup) { Copy-Item $keyBackup "$AppDir\tempkey.jwk" }
 Remove-Item $Holder -Recurse -Force
 
 # Publish from source, or reuse already-published output.
@@ -161,6 +165,6 @@ try {
 
 Write-Host "`nService '$ServiceName' installed and running." -ForegroundColor Green
 Write-Host "  App dir     : $AppDir" -ForegroundColor Gray
-Write-Host "  Signing key : $AppDir\keys\ (persists across restarts)" -ForegroundColor Gray
+Write-Host "  Signing key : $AppDir\tempkey.jwk (persists across restarts)" -ForegroundColor Gray
 Write-Host "  Manage      : & '$servyExe' start|stop|remove -n $ServiceName" -ForegroundColor Gray
 Write-Host "  Uninstall   : .\Install-IdPService.ps1 -Uninstall" -ForegroundColor Gray
