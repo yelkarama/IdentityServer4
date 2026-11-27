@@ -52,6 +52,24 @@ Put both zips in `\\S10001\grpreg$\dropzone\Younes\idp`:
 
 ## 2. Install and start the service
 
+If PowerShell blocks the script ("running scripts is disabled on this system"),
+check the effective policies and, if the block isn't from group policy, loosen
+it for your user:
+
+```powershell
+Get-ExecutionPolicy -List
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+The script is Authenticode-signed, so it also satisfies a stricter `AllSigned`
+policy. If the blocking policy comes from group policy (`MachinePolicy` or
+`UserPolicy` rows in the list above), a per-user setting can't override it —
+use a one-shot bypass instead:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Install-IdPService.ps1
+```
+
 Open **PowerShell as Administrator** and run:
 
 ```powershell
