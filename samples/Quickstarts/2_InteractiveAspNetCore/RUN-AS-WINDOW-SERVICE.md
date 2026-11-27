@@ -116,3 +116,5 @@ service name `idp`, display name `OSCAR IdentityServer`).
   OSCAR should point at `http://<this-laptop>:5555`.
 - `Program.cs` calls `UseWindowsService()`, which is a no-op unless the app runs under
   a Windows service — so the same build still runs fine with `dotnet run` or in Docker.
+- Detailed logs (Serilog, Debug level) are written to `C:\Devtools\idp\idp.log` and
+  the file is reset on every service restart.
